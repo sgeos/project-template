@@ -24,3 +24,5 @@ making any non-trivial change.
 - **Scratch directories.** Use `tmp/` for transient files. Its contents are ignored. Never
   commit anything under `secret/`, and never copy its contents into tracked files.
 - **Run `./scripts/check.sh` before committing.**
+- **One writer per checkout.** If another line is already working here, use
+  `scripts/worktree.sh` to work in a separate worktree.

@@ -1,0 +1,17 @@
+# Citation metadata, read by GitHub's "Cite this repository" button and by reference
+# managers. Add `version` and `date-released` at the first release, and keep them
+# current with each later one.
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "PROJECT_NAME"
+abstract: >
+  One or two sentences that say what PROJECT_NAME is.
+authors:
+  - family-names: "Sechter"
+    given-names: "Brendan"
+url: "https://github.com/sgeos/PROJECT_NAME"
+repository-code: "https://github.com/sgeos/PROJECT_NAME"
+license: "0BSD"
+type: software
+keywords:
+  - "PROJECT_NAME"

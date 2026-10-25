@@ -9,3 +9,13 @@ All notable changes are recorded here. The format follows
 ### Added
 
 - The repository, seeded from `sgeos/project-template`.
+
+<!--
+Template history, for the template repository itself. Delete this block in a new project.
+- 2026-10-25. Seeded.
+- 2026-10-25. README badges, CITATION.cff, llms.txt, issue templates with a private
+  security route, scripts/worktree.sh for parallel lines, an opt-in pre-push hook, a
+  relative Markdown link check in scripts/check.sh, and a supported-versions table in
+  SECURITY.md, each drawn from the Keleusma repository.
+-->
+
