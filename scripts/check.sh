@@ -89,6 +89,49 @@ sys.exit(1 if broken else 0)
 ' || fail "broken relative links in Markdown, listed above"
 pass "relative Markdown links resolve"
 
+# Shell scripts and hooks pass shellcheck. A missing shellcheck is a failure, not a
+# skip, so that a green gate never means "not checked". GitHub's Ubuntu runners include
+# it. Elsewhere, install it with the system package manager, such as
+# `sudo port install shellcheck`, `brew install shellcheck` or `apt install shellcheck`.
+# A read loop rather than mapfile, because macOS ships bash 3.2, which lacks mapfile.
+shell_files=()
+while IFS= read -r -d '' file; do
+    shell_files+=("$file")
+done < <(git ls-files -z -- '*.sh' 'scripts/hooks/*')
+if ((${#shell_files[@]} > 0)); then
+    command -v shellcheck >/dev/null ||
+        fail "shellcheck is not installed, so ${#shell_files[@]} shell files went unchecked"
+    shellcheck -- "${shell_files[@]}" || fail "shellcheck reported problems, listed above"
+fi
+pass "shellcheck is clean on ${#shell_files[@]} shell files"
+
+# Optional disclosure scan. If secret/disclosure-terms.txt exists, no tracked file may
+# contain any of its terms, matched as fixed strings without regard to case. Blank
+# lines and lines starting with # are ignored. The scan prints only the file and line
+# of each match, never the matched text, so that the gate's own output does not
+# disclose a term. The list lives under secret/, so the scan cannot run in a clone or
+# in continuous integration, and it says so rather than passing silently.
+terms_file="secret/disclosure-terms.txt"
+if [[ -f "$terms_file" ]]; then
+    patterns=()
+    while IFS= read -r term || [[ -n "$term" ]]; do
+        [[ "$term" =~ ^[[:space:]]*(#|$) ]] && continue
+        patterns+=(-e "$term")
+    done < "$terms_file"
+    if ((${#patterns[@]} > 0)); then
+        hits="$(git grep -n -I -i -F "${patterns[@]}" -- . | cut -d: -f1,2 || true)"
+        if [[ -n "$hits" ]]; then
+            printf '%s\n' "$hits" >&2
+            fail "tracked files contain terms from $terms_file, at the lines listed above"
+        fi
+        pass "disclosure scan found no listed term in tracked files"
+    else
+        printf 'check.sh: note: %s lists no terms, so the disclosure scan did nothing\n' "$terms_file"
+    fi
+else
+    printf 'check.sh: note: no %s, so the disclosure scan was skipped\n' "$terms_file"
+fi
+
 # --- Project checks -----------------------------------------------------------------
 #
 # Add the project's commands here. Each should exit non-zero on failure, which stops
