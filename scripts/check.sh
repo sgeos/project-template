@@ -53,14 +53,22 @@ pass "no unresolved merge markers"
 
 # A repository made from the template must not keep the template's CI badge, which
 # would show the template's status as if it were the project's. The repository's name
-# is taken from the origin remote, so this check is skipped when there is none.
+# is taken from the origin remote, so this check is skipped when origin is missing or
+# is not on GitHub, such as a clone of a local path.
 origin="$(git remote get-url origin 2>/dev/null || true)"
-repository="$(basename "${origin%.git}")"
-if [[ -n "$origin" && "$repository" != "project-template" ]] &&
+repository=""
+if [[ "$origin" =~ github\.com[:/][^/]+/([^/]+)$ ]]; then
+    repository="${BASH_REMATCH[1]%.git}"
+fi
+if [[ -n "$repository" && "$repository" != "project-template" ]] &&
     grep -q 'sgeos/project-template/actions' README.md 2>/dev/null; then
     fail "README.md still shows the template's CI badge. Point it at sgeos/$repository"
 fi
-pass "the README's CI badge belongs to this repository, or there is no origin to compare"
+if [[ -n "$repository" ]]; then
+    pass "the README does not show the template's CI badge in $repository"
+else
+    printf 'check.sh: note: origin is not a GitHub repository, so the CI badge was not checked\n'
+fi
 
 # Relative links in tracked Markdown files must resolve to a tracked or present path.
 # External links, mail links and links to an anchor in the same file are not checked,
