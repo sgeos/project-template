@@ -55,7 +55,11 @@ accident. Run every command below from the repository root.
 3. **Placeholders.** Replace `PROJECT_NAME` everywhere, and the placeholder text in
    `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
    `git grep -n PROJECT_NAME` lists what remains.
-4. **License.** Check the year and the holder in `LICENSE`.
+4. **License.** Check the year and the holder in `LICENSE`. For a licence other than
+   0BSD, also change every other statement of it. `git grep -n 0BSD` lists them,
+   which include the badge and License section in this file, `CITATION.cff`,
+   `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. The code of conduct's own CC0
+   dedication can stay.
 5. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
    green run in either place means the same thing.
