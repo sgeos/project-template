@@ -54,17 +54,14 @@ template's identity by accident.
 3. **Placeholders.** Replace `PROJECT_NAME` everywhere, and the placeholder text in
    `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
    `grep -rn PROJECT_NAME .` lists what remains.
-4. **Conduct contact.** Replace `REPORT_CONTACT` in `CODE_OF_CONDUCT.md` with a private
-   way to reach the maintainer. A dedicated address keeps a personal one out of public
-   files.
-5. **License.** Check the year and the holder in `LICENSE`.
-6. **Gate.** Add the project's lint, format, type and test commands to
+4. **License.** Check the year and the holder in `LICENSE`.
+5. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
    green run in either place means the same thing.
-7. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
+6. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
    and virtual environments. Keep the `tmp/` and `secret/` rules.
-8. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
-9. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
+7. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
+8. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
    because SSH keys are unreachable from inside agent sandboxes. Run this once, outside
    any sandbox, since sandboxes usually protect `.git/config`.
 
@@ -76,7 +73,7 @@ template's identity by accident.
 
    If `gh` is not on the `PATH` that git sees, give its absolute path, as in
    `!/opt/local/bin/gh auth git-credential`.
-10. **Repository settings.** A template does not carry its settings to the repositories
+9. **Repository settings.** A template does not carry its settings to the repositories
     made from it. Apply them to each new repository.
 
     ```sh
@@ -96,16 +93,16 @@ template's identity by accident.
 
     The ruleset forbids deleting `main` and force-pushing to it. Topics make the
     repository findable by subject, so choose a few, such as its language and domain.
-11. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
+10. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
     if it is not installed. Install it locally with the system package manager.
     To scan for terms that must never be published, list them one per line in
     `secret/disclosure-terms.txt`, which is never committed.
-12. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
+11. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
     before every push. `git push --no-verify` skips it for a work-in-progress push.
-13. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
+12. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
     `date-released` at the first release. Delete it otherwise.
-14. **Private context.** If the project belongs to a family of repositories whose
+13. **Private context.** If the project belongs to a family of repositories whose
     private context is kept outside the repository, add that family's constraint to
     `CLAUDE.md` and `AGENTS.md`.
-15. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
+14. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
     work, and delete this checklist.

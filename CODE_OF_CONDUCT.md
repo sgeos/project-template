@@ -37,8 +37,8 @@ The person or organisation that operates an agent is responsible for what it pos
 ## Enforcement
 
 The maintainer may edit or remove any contribution, and may restrict or block anyone
-who does not follow this code, in proportion to what happened. Report a concern
-privately to REPORT_CONTACT. Reports are kept confidential as far as the law allows.
+who does not follow this code, in proportion to what happened. To report a concern,
+contact the maintainer privately. Reports are kept confidential as far as the law allows.
 Nothing here creates a contract or a right to be heard. It records how the maintainer
 intends to act.
 

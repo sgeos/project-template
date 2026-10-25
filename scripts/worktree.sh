@@ -3,7 +3,7 @@
 #
 # Each concurrent agent line, or person, gets its own working directory on its own
 # feature branch, so parallel work never shares one dirty tree, one index or one
-# running gate. This follows the Keleusma repository's scripts/worktree.sh.
+# running gate.
 #
 # Worktrees are created as siblings of the repository, under
 # ../<repository>-worktrees/<branch>, with each slash in the branch name replaced by a
