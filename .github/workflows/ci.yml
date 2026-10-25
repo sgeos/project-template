@@ -26,8 +26,7 @@ permissions:
 # Supersede an in-flight run when a pull request is pushed again, and leave branch runs
 # alone. The group is the ref for a pull request and the unique run identifier
 # otherwise, so that a second merge to main cannot cancel the first merge's run and
-# leave a commit on main with no result of its own. This follows the Keleusma
-# repository's reasoning in its own ci.yml.
+# leave a commit on main with no result of its own.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
@@ -42,7 +41,7 @@ jobs:
         with:
           persist-credentials: false
       # Set up the project's language before the gate, pinned like checkout. For
-      # example, for Python, with the pin pykeleusma and pydromon use:
+      # example, for Python:
       #
       # - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       #   with:

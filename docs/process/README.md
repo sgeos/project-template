@@ -9,5 +9,5 @@
 | [`PROMPT.md`](PROMPT.md) | Instruction staging from the operator | Read-only for the agent |
 
 There is no task log. Task state lives in the roadmap tables and in `HANDOFF.md`, and
-history lives in git. This follows `pykeleusma`, which chose the overwrite-only form after
-the Keleusma project's append-only logs grew too large to read at startup.
+history lives in git. The overwrite-only form is deliberate. Append-only logs grow until
+they are too large to read at startup, which defeats their purpose.
