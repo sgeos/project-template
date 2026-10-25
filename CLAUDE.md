@@ -76,7 +76,7 @@ Add the project's build, test and run commands here as they come to exist.
   agent sandboxes usually deny, such as sockets, the network or the system keychain, or
   that spend a paid credential or subscription, are marked and off by default. They run
   only when asked, through a test marker or an environment variable such as
-  `PROJECT_NAME_LIVE_TESTS=1`, which the project's Common Commands name. Report how many
+  `RUN_LIVE_TESTS=1`, which the project's Common Commands name. Report how many
   were skipped and why.
 - **A local pass is not a remote pass.** Continuous integration runs on other operating
   systems and tool versions. Say which one was observed.
