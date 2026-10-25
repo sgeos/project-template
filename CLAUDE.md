@@ -93,11 +93,10 @@ environment-specific notes. It is ignored whole and does not exist in a fresh cl
 Never copy its contents into tracked files, commit messages, issues or pull requests.
 
 `scripts/check.sh` fails if anything under `secret/`, or anything under `tmp/` other than
-its marker, is tracked. If
-`secret/disclosure-terms.txt` exists, one term per line, the gate also fails when a
-tracked file contains any of those terms, and it prints only the file and line. The scan
-cannot run in a clone or in continuous integration, which do not have the list, and the
-gate says so when it skips.
+its marker, is tracked. If `secret/disclosure-terms.txt` exists, one term per line, the
+gate also fails when a tracked file contains any of those terms, and it prints only the
+file and line. The scan cannot run in a clone or in continuous integration, which do not
+have the list, and the gate says so when it skips.
 
 ## Coding Conventions
 

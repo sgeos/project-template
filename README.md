@@ -42,8 +42,9 @@ Participation is governed by the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 ## New project checklist
 
 The template is language agnostic. These steps make it specific to one project.
-`scripts/check.sh` fails until steps 1 and 2 are done, so a new project cannot keep the
-template's identity by accident.
+Once the origin remote names the new GitHub repository, `scripts/check.sh` fails until
+steps 1 and 2 are done, so a new project cannot keep the template's identity by
+accident. Run every command below from the repository root.
 
 1. **README title.** Replace the `Project Template` heading at the top of this file with
    the project's name, and replace the sentence under the badges with what the project
@@ -53,7 +54,7 @@ template's identity by accident.
    project will show the template's status as its own.
 3. **Placeholders.** Replace `PROJECT_NAME` everywhere, and the placeholder text in
    `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
-   `grep -rn PROJECT_NAME .` lists what remains.
+   `git grep -n PROJECT_NAME` lists what remains.
 4. **License.** Check the year and the holder in `LICENSE`.
 5. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
@@ -90,10 +91,14 @@ template's identity by accident.
     gh api -X PUT "repos/$R/private-vulnerability-reporting"
     gh api -X POST "repos/$R/rulesets" --input .github/rulesets/main.json
     gh repo edit "$R" --description "One sentence from above." --add-topic TOPIC1,TOPIC2
+    gh label create breaking -R "$R" --color B60205 --description "Breaks compatibility"
+    gh label create ignore-for-release -R "$R" --color EDEDED \
+      --description "Left out of generated release notes"
     ```
 
     Private vulnerability reporting is what makes the advisory link in `SECURITY.md`
-    work. The ruleset forbids deleting `main` and force-pushing to it. Topics make the
+    work. The ruleset forbids deleting `main` and force-pushing to it. The two labels are the
+ones `.github/release.yml` uses that GitHub does not create by default. Topics make the
     repository findable by subject, so choose a few, such as its language and domain.
 10. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
     if it is not installed. Install it locally with the system package manager.
