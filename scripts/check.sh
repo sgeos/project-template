@@ -51,6 +51,17 @@ if git grep -nI -E '^(<<<<<<< |>>>>>>> |=======$)' -- . ':!scripts/check.sh' >/d
 fi
 pass "no unresolved merge markers"
 
+# A repository made from the template must not keep the template's CI badge, which
+# would show the template's status as if it were the project's. The repository's name
+# is taken from the origin remote, so this check is skipped when there is none.
+origin="$(git remote get-url origin 2>/dev/null || true)"
+repository="$(basename "${origin%.git}")"
+if [[ -n "$origin" && "$repository" != "project-template" ]] &&
+    grep -q 'sgeos/project-template/actions' README.md 2>/dev/null; then
+    fail "README.md still shows the template's CI badge. Point it at sgeos/$repository"
+fi
+pass "the README's CI badge belongs to this repository, or there is no origin to compare"
+
 # Relative links in tracked Markdown files must resolve to a tracked or present path.
 # External links, mail links and links to an anchor in the same file are not checked,
 # and neither are anchors within another file. Links inside fenced code blocks are

@@ -1,6 +1,6 @@
 # PROJECT_NAME
 
-[![CI](https://github.com/sgeos/PROJECT_NAME/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sgeos/PROJECT_NAME/actions/workflows/ci.yml)
+[![CI](https://github.com/sgeos/project-template/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sgeos/project-template/actions/workflows/ci.yml)
 [![License: 0BSD](https://img.shields.io/badge/license-0BSD-blue.svg)](LICENSE)
 
 <!--
@@ -44,8 +44,10 @@ The template is language agnostic. These steps make it specific to one project.
 
 1. **Names.** Replace `PROJECT_NAME` everywhere, and replace the placeholder text in this
    file, `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
-   `grep -rn PROJECT_NAME .` lists what remains. Until then, the CI badge above points
-   at a repository that does not exist and shows as broken.
+   `grep -rn PROJECT_NAME .` lists what remains. The CI badge is the one exception. It
+   names `project-template`, so that the template's own page shows a working badge.
+   Point it at the new repository, or it will show the template's status, not the
+   project's. `scripts/check.sh` fails until that is done.
 2. **License.** Check the year and the holder in `LICENSE`.
 3. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
