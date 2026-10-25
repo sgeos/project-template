@@ -44,9 +44,11 @@ if [[ -z "$(git ls-files -- tmp/.gitkeep)" ]]; then
 fi
 pass "only tmp/.gitkeep is tracked under tmp/"
 
-# Unresolved merge markers in tracked text files. Binary files are skipped by -I.
-if git grep -nI -E '^(<<<<<<< |>>>>>>> |=======$)' -- . ':!scripts/check.sh' >/dev/null; then
-    git grep -nI -E '^(<<<<<<< |>>>>>>> |=======$)' -- . ':!scripts/check.sh' >&2
+# Unresolved merge markers in tracked text files. Binary files are skipped by -I. Only
+# the opening and closing markers are matched, because a line of exactly seven equals
+# signs is also a valid Markdown setext heading underline.
+if git grep -nI -E '^(<<<<<<< |>>>>>>> )' -- . ':!scripts/check.sh' >/dev/null; then
+    git grep -nI -E '^(<<<<<<< |>>>>>>> )' -- . ':!scripts/check.sh' >&2
     fail "unresolved merge markers are present"
 fi
 pass "no unresolved merge markers"
@@ -106,7 +108,9 @@ for raw in filter(None, files):
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             target = target.split("#", 1)[0].strip("<>")
-            if target and not (path.parent / target).exists():
+            # GitHub resolves a link that starts with a slash from the repository root.
+            base = pathlib.Path(".") if target.startswith("/") else path.parent
+            if target and not (base / target.lstrip("/")).exists():
                 broken.append(f"{path}:{number}: {target}")
 for entry in broken:
     print(entry, file=sys.stderr)
@@ -115,21 +119,30 @@ sys.exit(1 if broken else 0)
 pass "relative Markdown links resolve"
 
 # Text and file hygiene, matching .editorconfig and .gitattributes. Every tracked text
-# file ends with a newline and has no carriage returns, and files other than Markdown
-# have no trailing whitespace, since Markdown uses it for line breaks. Tracked shell
-# scripts and hooks are executable. No tracked file exceeds MAX_FILE_BYTES, which
+# file ends with a newline and has no carriage returns, except Windows batch files,
+# which need them, and files other than Markdown have no trailing whitespace, since
+# Markdown uses it for line breaks. No tracked file exceeds MAX_FILE_BYTES, which
 # defaults to 5 MiB, so a large binary is added deliberately or not at all. A file is
 # text when its first 8 KiB holds no NUL byte, the same test git uses.
-MAX_FILE_BYTES="${MAX_FILE_BYTES:-5242880}" python3 -I -c '
+#
+# This step also finds the shell scripts for the shellcheck step below, and requires
+# them to be executable. A shell script is a tracked file named *.sh, a file under
+# scripts/hooks/, or any file whose first line is a sh, bash, dash or ksh shebang,
+# which covers scripts without an extension. It prints their paths, one per line.
+if ! shell_list="$(MAX_FILE_BYTES="${MAX_FILE_BYTES:-5242880}" python3 -I -c '
 import os
+import re
 import subprocess
 import sys
+
+shebang = re.compile(rb"^#!\s*(?:\S*/)?(?:env\s+(?:-S\s+)?)?(?:sh|bash|dash|ksh)(?:\s|$)")
 
 limit = int(os.environ["MAX_FILE_BYTES"])
 listing = subprocess.run(
     ["git", "ls-files", "-s", "-z"], check=True, capture_output=True
 ).stdout.split(b"\0")
 problems = []
+shells = []
 for entry in filter(None, listing):
     meta, raw_path = entry.split(b"\t", 1)
     mode = meta.split()[0].decode()
@@ -139,13 +152,16 @@ for entry in filter(None, listing):
     size = os.path.getsize(path)
     if size > limit:
         problems.append(f"{path}: {size} bytes, above the limit of {limit}")
-    if (path.endswith(".sh") or path.startswith("scripts/hooks/")) and mode != "100755":
-        problems.append(f"{path}: not executable, fix with git update-index --chmod=+x")
     with open(path, "rb") as handle:
         data = handle.read()
+    first_line = data.split(b"\n", 1)[0]
+    if path.endswith(".sh") or path.startswith("scripts/hooks/") or shebang.match(first_line):
+        shells.append(path)
+        if mode != "100755":
+            problems.append(f"{path}: not executable, fix with git update-index --chmod=+x")
     if b"\0" in data[:8192] or not data:
         continue
-    if b"\r" in data:
+    if b"\r" in data and not path.lower().endswith((".bat", ".cmd")):
         problems.append(f"{path}: contains carriage returns")
     if not data.endswith(b"\n"):
         problems.append(f"{path}: does not end with a newline")
@@ -155,19 +171,25 @@ for entry in filter(None, listing):
                 problems.append(f"{path}:{number}: trailing whitespace")
 for problem in problems:
     print(problem, file=sys.stderr)
+for path in shells:
+    print(path)
 sys.exit(1 if problems else 0)
-' || fail "text or file hygiene problems, listed above"
+')"; then
+    fail "text or file hygiene problems, listed above"
+fi
 pass "tracked files end with newlines, have no stray whitespace, and are within size"
 
 # Shell scripts and hooks pass shellcheck. A missing shellcheck is a failure, not a
 # skip, so that a green gate never means "not checked". GitHub's Ubuntu runners include
 # it. Elsewhere, install it with the system package manager, such as
 # `sudo port install shellcheck`, `brew install shellcheck` or `apt install shellcheck`.
-# A read loop rather than mapfile, because macOS ships bash 3.2, which lacks mapfile.
+# The list comes from the hygiene step above. A read loop rather than mapfile, because
+# macOS ships bash 3.2, which lacks mapfile. A path containing a newline is not
+# supported.
 shell_files=()
-while IFS= read -r -d '' file; do
-    shell_files+=("$file")
-done < <(git ls-files -z -- '*.sh' 'scripts/hooks/*')
+while IFS= read -r file; do
+    [[ -n "$file" ]] && shell_files+=("$file")
+done < <(printf '%s\n' "$shell_list")
 if ((${#shell_files[@]} > 0)); then
     command -v shellcheck >/dev/null ||
         fail "shellcheck is not installed, so ${#shell_files[@]} shell files went unchecked"
