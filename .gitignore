@@ -1,0 +1,33 @@
+# Project-local scratch directory, committed through a .gitkeep marker with its
+# contents ignored. Use `tmp/` for transient files such as commit messages, draft
+# text, scratch scripts and probe outputs. The pattern matches the Keleusma
+# repository. scripts/check.sh fails if anything else under tmp/ is tracked.
+/tmp/*
+!/tmp/.gitkeep
+
+# Local, never-committed material such as credentials, API keys and
+# environment-specific notes. Ignored whole, as in the Keleusma repository, so the
+# directory does not exist in a fresh clone. scripts/check.sh fails if anything
+# under it is tracked.
+/secret/
+
+# Environment files, which usually hold credentials. Commit an example with
+# placeholder values instead.
+.env
+.env.*
+!.env.example
+
+# Agent runtime state, such as session lock files and host-specific settings. Local
+# to each contributor's session and not project content.
+.claude/
+.codex/
+
+# Operating system and editor droppings.
+.DS_Store
+Thumbs.db
+*.swp
+*~
+nvim.log
+
+# Add language and tool entries below, such as build output, dependency
+# directories and virtual environments.
