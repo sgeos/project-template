@@ -114,6 +114,51 @@ sys.exit(1 if broken else 0)
 ' || fail "broken relative links in Markdown, listed above"
 pass "relative Markdown links resolve"
 
+# Text and file hygiene, matching .editorconfig and .gitattributes. Every tracked text
+# file ends with a newline and has no carriage returns, and files other than Markdown
+# have no trailing whitespace, since Markdown uses it for line breaks. Tracked shell
+# scripts and hooks are executable. No tracked file exceeds MAX_FILE_BYTES, which
+# defaults to 5 MiB, so a large binary is added deliberately or not at all. A file is
+# text when its first 8 KiB holds no NUL byte, the same test git uses.
+MAX_FILE_BYTES="${MAX_FILE_BYTES:-5242880}" python3 -I -c '
+import os
+import subprocess
+import sys
+
+limit = int(os.environ["MAX_FILE_BYTES"])
+listing = subprocess.run(
+    ["git", "ls-files", "-s", "-z"], check=True, capture_output=True
+).stdout.split(b"\0")
+problems = []
+for entry in filter(None, listing):
+    meta, raw_path = entry.split(b"\t", 1)
+    mode = meta.split()[0].decode()
+    path = raw_path.decode()
+    if mode == "120000" or not os.path.isfile(path):
+        continue
+    size = os.path.getsize(path)
+    if size > limit:
+        problems.append(f"{path}: {size} bytes, above the limit of {limit}")
+    if (path.endswith(".sh") or path.startswith("scripts/hooks/")) and mode != "100755":
+        problems.append(f"{path}: not executable, fix with git update-index --chmod=+x")
+    with open(path, "rb") as handle:
+        data = handle.read()
+    if b"\0" in data[:8192] or not data:
+        continue
+    if b"\r" in data:
+        problems.append(f"{path}: contains carriage returns")
+    if not data.endswith(b"\n"):
+        problems.append(f"{path}: does not end with a newline")
+    if not path.endswith(".md"):
+        for number, line in enumerate(data.split(b"\n"), 1):
+            if line.rstrip(b" \t") != line:
+                problems.append(f"{path}:{number}: trailing whitespace")
+for problem in problems:
+    print(problem, file=sys.stderr)
+sys.exit(1 if problems else 0)
+' || fail "text or file hygiene problems, listed above"
+pass "tracked files end with newlines, have no stray whitespace, and are within size"
+
 # Shell scripts and hooks pass shellcheck. A missing shellcheck is a failure, not a
 # skip, so that a green gate never means "not checked". GitHub's Ubuntu runners include
 # it. Elsewhere, install it with the system package manager, such as
