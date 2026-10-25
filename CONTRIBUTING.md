@@ -6,6 +6,10 @@ Contributions are welcome, including fixes, documentation and tests.
 is released under the same licence. Do not contribute material that you did not write,
 or that carries terms of its own.
 
+Participation in the project's spaces follows the
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Contributions are judged on their technical
+merits.
+
 ## Before opening a pull request
 
 1. Run `./scripts/check.sh` and confirm that it exits zero.
