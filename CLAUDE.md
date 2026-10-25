@@ -72,6 +72,12 @@ Add the project's build, test and run commands here as they come to exist.
   old code.
 - **Count what was reached.** A suite that collected zero tests, or skipped them all,
   passes. Check the count in the summary line.
+- **Opt-in tests are counted as skipped, not as passed.** Tests that need a capability
+  agent sandboxes usually deny, such as sockets, the network or the system keychain, or
+  that spend a paid credential or subscription, are marked and off by default. They run
+  only when asked, through a test marker or an environment variable such as
+  `PROJECT_NAME_LIVE_TESTS=1`, which the project's Common Commands name. Report how many
+  were skipped and why.
 - **A local pass is not a remote pass.** Continuous integration runs on other operating
   systems and tool versions. Say which one was observed.
 
@@ -87,7 +93,11 @@ environment-specific notes. It is ignored whole and does not exist in a fresh cl
 Never copy its contents into tracked files, commit messages, issues or pull requests.
 
 `scripts/check.sh` fails if anything under `secret/`, or anything under `tmp/` other than
-its marker, is tracked. Both rules follow the Keleusma repository.
+its marker, is tracked. Both rules follow the Keleusma repository. If
+`secret/disclosure-terms.txt` exists, one term per line, the gate also fails when a
+tracked file contains any of those terms, and it prints only the file and line. The scan
+cannot run in a clone or in continuous integration, which do not have the list, and the
+gate says so when it skips.
 
 ## Coding Conventions
 

@@ -17,5 +17,9 @@ Template history, for the template repository itself. Delete this block in a new
   security route, scripts/worktree.sh for parallel lines, an opt-in pre-push hook, a
   relative Markdown link check in scripts/check.sh, and a supported-versions table in
   SECURITY.md, each drawn from the Keleusma repository.
+- 2026-10-25. From the pydromon line's suggestions. A shellcheck step that fails when
+  the tool is absent, an optional disclosure scan against secret/disclosure-terms.txt,
+  the opt-in test convention, a pinned language-setup example in ci.yml, and topics in
+  the settings step.
 -->
 

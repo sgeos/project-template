@@ -80,14 +80,20 @@ The template is language agnostic. These steps make it specific to one project.
    JSON
    gh api -X PUT "repos/$R/vulnerability-alerts"
    gh api -X POST "repos/$R/rulesets" --input .github/rulesets/main.json
+   gh repo edit "$R" --description "One sentence from above." --add-topic TOPIC1,TOPIC2
    ```
 
-   The ruleset forbids deleting `main` and force-pushing to it.
-8. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
+   The ruleset forbids deleting `main` and force-pushing to it. Topics make the
+   repository findable by subject, so choose a few, such as its language and domain.
+8. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
+   if it is not installed. Install it locally with the system package manager.
+   To scan for terms that must never be published, list them one per line in
+   `secret/disclosure-terms.txt`, which is never committed.
+9. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
    before every push. `git push --no-verify` skips it for a work-in-progress push.
-9. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
+10. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
    `date-released` at the first release. Delete it otherwise.
-10. **Keleusma family.** If the project belongs to the Keleusma family, add the
+11. **Keleusma family.** If the project belongs to the Keleusma family, add the
    Appendix B constraint to `CLAUDE.md` and `AGENTS.md`, worded as in `pydromon`.
-11. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
+12. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
    work, and delete this checklist.
