@@ -51,6 +51,44 @@ if git grep -nI -E '^(<<<<<<< |>>>>>>> |=======$)' -- . ':!scripts/check.sh' >/d
 fi
 pass "no unresolved merge markers"
 
+# Relative links in tracked Markdown files must resolve to a tracked or present path.
+# External links, mail links and links to an anchor in the same file are not checked,
+# and neither are anchors within another file. Links inside fenced code blocks are
+# skipped. This needs python3, which GitHub's runners and macOS both provide. The
+# program is passed with -c rather than a heredoc, because some agent sandboxes forbid
+# the temporary file that bash writes for a heredoc.
+python3 -I -c '
+import pathlib
+import re
+import subprocess
+import sys
+
+files = subprocess.run(
+    ["git", "ls-files", "-z", "--", "*.md"], check=True, capture_output=True
+).stdout.split(b"\0")
+link = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+broken = []
+for raw in filter(None, files):
+    path = pathlib.Path(raw.decode())
+    in_fence = False
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if line.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        for target in link.findall(line):
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            target = target.split("#", 1)[0].strip("<>")
+            if target and not (path.parent / target).exists():
+                broken.append(f"{path}:{number}: {target}")
+for entry in broken:
+    print(entry, file=sys.stderr)
+sys.exit(1 if broken else 0)
+' || fail "broken relative links in Markdown, listed above"
+pass "relative Markdown links resolve"
+
 # --- Project checks -----------------------------------------------------------------
 #
 # Add the project's commands here. Each should exit non-zero on failure, which stops

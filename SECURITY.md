@@ -1,5 +1,13 @@
 # Security Policy
 
+## Supported versions
+
+| Version | Supported |
+|---|---|
+| Unreleased `main` | Yes |
+
+Replace this table at the first release, and keep it current with each release line.
+
 ## Reporting a vulnerability
 
 Please report security issues privately, so that a fix can be prepared before public

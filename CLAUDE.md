@@ -47,6 +47,11 @@ The remote is `https://github.com/sgeos/PROJECT_NAME`. Its git configuration use
 GitHub command-line tool as the credential helper, because SSH keys are unreachable from
 inside agent sandboxes.
 
+**One writer per checkout.** When more than one line works on the repository at once,
+each works in its own worktree on its own branch, created with `scripts/worktree.sh`.
+Two lines in one checkout share an index and a dirty tree, so one line's `git add`,
+stash or reset can take in or discard the other's work.
+
 **Irreversible or outward-facing actions need the operator's confirmation in session.**
 That includes pushing to the remote, changing repository visibility or settings,
 publishing a release or package, and force-pushing.
@@ -54,7 +59,9 @@ publishing a release or package, and force-pushing.
 ## Common Commands
 
 ```sh
-./scripts/check.sh    # the local gate, which continuous integration also runs
+./scripts/check.sh                       # the local gate, which continuous integration also runs
+scripts/worktree.sh new feat/some-thing  # an isolated worktree for a parallel line
+scripts/worktree.sh rm  feat/some-thing  # remove it once merged
 ```
 
 Add the project's build, test and run commands here as they come to exist.

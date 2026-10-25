@@ -1,5 +1,16 @@
 # PROJECT_NAME
 
+[![CI](https://github.com/sgeos/PROJECT_NAME/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sgeos/PROJECT_NAME/actions/workflows/ci.yml)
+[![License: 0BSD](https://img.shields.io/badge/license-0BSD-blue.svg)](LICENSE)
+
+<!--
+Add a badge for each place the project is published, after the first release, for example:
+[![Crates.io](https://img.shields.io/crates/v/PROJECT_NAME.svg)](https://crates.io/crates/PROJECT_NAME)
+[![Docs.rs](https://docs.rs/PROJECT_NAME/badge.svg)](https://docs.rs/PROJECT_NAME)
+[![PyPI](https://img.shields.io/pypi/v/PROJECT_NAME.svg)](https://pypi.org/project/PROJECT_NAME/)
+[![npm](https://img.shields.io/npm/v/PROJECT_NAME.svg)](https://www.npmjs.com/package/PROJECT_NAME)
+-->
+
 One sentence that says what this project is and who it is for.
 
 > Created from [`sgeos/project-template`](https://github.com/sgeos/project-template).
@@ -14,7 +25,8 @@ One sentence that says what this project is and who it is for.
 ## Development
 
 ```sh
-./scripts/check.sh    # the local gate, which continuous integration also runs
+./scripts/check.sh                       # the local gate, which continuous integration also runs
+scripts/worktree.sh new feat/some-thing  # an isolated worktree for a parallel line
 ```
 
 ## Documentation
@@ -31,8 +43,9 @@ The documentation index is [`docs/README.md`](docs/README.md). Agent guidance is
 The template is language agnostic. These steps make it specific to one project.
 
 1. **Names.** Replace `PROJECT_NAME` everywhere, and replace the placeholder text in this
-   file, `CLAUDE.md`, `SECURITY.md` and `docs/`.
-   `grep -rn PROJECT_NAME .` lists what remains.
+   file, `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
+   `grep -rn PROJECT_NAME .` lists what remains. Until then, the CI badge above points
+   at a repository that does not exist and shows as broken.
 2. **License.** Check the year and the holder in `LICENSE`.
 3. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
@@ -70,7 +83,11 @@ The template is language agnostic. These steps make it specific to one project.
    ```
 
    The ruleset forbids deleting `main` and force-pushing to it.
-8. **Keleusma family.** If the project belongs to the Keleusma family, add the
+8. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
+   before every push. `git push --no-verify` skips it for a work-in-progress push.
+9. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
+   `date-released` at the first release. Delete it otherwise.
+10. **Keleusma family.** If the project belongs to the Keleusma family, add the
    Appendix B constraint to `CLAUDE.md` and `AGENTS.md`, worded as in `pydromon`.
-9. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
+11. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
    work, and delete this checklist.
