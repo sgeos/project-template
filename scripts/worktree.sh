@@ -9,7 +9,8 @@
 # ../<repository>-worktrees/<branch>, with each slash in the branch name replaced by a
 # dash, so that `feat/x` and `fix/x` do not collide. Override the parent directory with
 # WORKTREE_BASE and the branch new work starts from with WORKTREE_TRUNK, which
-# defaults to main.
+# defaults to main. If the trunk has no local branch, as in a fresh clone, new work
+# starts from origin/<trunk>, and the new branch does not track it.
 #
 # Usage:
 #   scripts/worktree.sh new  feat/some-thing   # new branch off the trunk, in a new tree
@@ -59,8 +60,15 @@ case "$command" in
             printf 'worktree.sh: %s already exists\n' "$path" >&2
             exit 1
         fi
+        # A fresh clone may have no local trunk branch, only its remote-tracking one.
+        start="$trunk"
+        if ! git -C "$main_root" rev-parse --verify --quiet "refs/heads/$trunk" >/dev/null; then
+            start="origin/$trunk"
+            git -C "$main_root" rev-parse --verify --quiet "refs/remotes/$start" >/dev/null ||
+                { printf 'worktree.sh: no branch %s or %s\n' "$trunk" "$start" >&2; exit 1; }
+        fi
         mkdir -p "$base"
-        git -C "$main_root" worktree add -b "$2" "$path" "$trunk"
+        git -C "$main_root" worktree add --no-track -b "$2" "$path" "$start"
         printf '%s\n' "$path"
         ;;
     list)
