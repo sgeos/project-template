@@ -1,10 +1,12 @@
 # Proposes updates to the pinned actions. Each proposal is a pull request that CI checks
 # and the operator reviews. The cooldown keeps a release out until it has had a week to
-# be noticed if it is bad.
+# be noticed if it is bad. Grouping puts every action update of one week into a single
+# pull request, which keeps review and CI load to one run a week.
 #
 # Add the project's own package ecosystem below, for example `cargo`, `uv`, `pip` or
-# `npm`, with the same schedule and cooldown. A project that pins its dependencies
-# exactly by decision may leave them out and update them by hand, and should say so here.
+# `npm`, with the same schedule, cooldown and grouping. A project that pins its
+# dependencies exactly by decision may leave them out and update them by hand, and
+# should say so here.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -13,3 +15,6 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
