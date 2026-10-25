@@ -51,8 +51,10 @@ if git grep -nI -E '^(<<<<<<< |>>>>>>> |=======$)' -- . ':!scripts/check.sh' >/d
 fi
 pass "no unresolved merge markers"
 
-# A repository made from the template must not keep the template's CI badge, which
-# would show the template's status as if it were the project's. The repository's name
+# A repository made from the template must not keep the template's README title or CI
+# badge. The badge would show the template's status as if it were the project's, and
+# the title would name the wrong project. These are steps 1 and 2 of the README's new
+# project checklist. The repository's name
 # is taken from the origin remote, so this check is skipped when origin is missing or
 # is not on GitHub, such as a clone of a local path.
 origin="$(git remote get-url origin 2>/dev/null || true)"
@@ -64,10 +66,14 @@ if [[ -n "$repository" && "$repository" != "project-template" ]] &&
     grep -q 'sgeos/project-template/actions' README.md 2>/dev/null; then
     fail "README.md still shows the template's CI badge. Point it at sgeos/$repository"
 fi
+if [[ -n "$repository" && "$repository" != "project-template" ]] &&
+    grep -qx '# Project Template' README.md 2>/dev/null; then
+    fail "README.md still has the template's title. Replace it with the project's name"
+fi
 if [[ -n "$repository" ]]; then
-    pass "the README does not show the template's CI badge in $repository"
+    pass "the README's title and CI badge are not the template's, or this is the template"
 else
-    printf 'check.sh: note: origin is not a GitHub repository, so the CI badge was not checked\n'
+    printf 'check.sh: note: origin is not a GitHub repository, so the README title and CI badge were not checked\n'
 fi
 
 # Relative links in tracked Markdown files must resolve to a tracked or present path.

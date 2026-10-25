@@ -1,4 +1,4 @@
-# PROJECT_NAME
+# Project Template
 
 [![CI](https://github.com/sgeos/project-template/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sgeos/project-template/actions/workflows/ci.yml)
 [![License: 0BSD](https://img.shields.io/badge/license-0BSD-blue.svg)](LICENSE)
@@ -33,6 +33,7 @@ scripts/worktree.sh new feat/some-thing  # an isolated worktree for a parallel l
 
 The documentation index is [`docs/README.md`](docs/README.md). Agent guidance is in
 [`CLAUDE.md`](CLAUDE.md), and [`AGENTS.md`](AGENTS.md) points other assistants to it.
+Participation is governed by the [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -41,21 +42,29 @@ The documentation index is [`docs/README.md`](docs/README.md). Agent guidance is
 ## New project checklist
 
 The template is language agnostic. These steps make it specific to one project.
+`scripts/check.sh` fails until steps 1 and 2 are done, so a new project cannot keep the
+template's identity by accident.
 
-1. **Names.** Replace `PROJECT_NAME` everywhere, and replace the placeholder text in this
-   file, `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
-   `grep -rn PROJECT_NAME .` lists what remains. The CI badge is the one exception. It
-   names `project-template`, so that the template's own page shows a working badge.
-   Point it at the new repository, or it will show the template's status, not the
-   project's. `scripts/check.sh` fails until that is done.
-2. **License.** Check the year and the holder in `LICENSE`.
-3. **Gate.** Add the project's lint, format, type and test commands to
+1. **README title.** Replace the `Project Template` heading at the top of this file with
+   the project's name, and replace the sentence under the badges with what the project
+   is.
+2. **CI badge.** The badge names `sgeos/project-template`, so that the template's own
+   page shows a working badge. Point both of its URLs at the new repository, or the
+   project will show the template's status as its own.
+3. **Placeholders.** Replace `PROJECT_NAME` everywhere, and the placeholder text in
+   `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
+   `grep -rn PROJECT_NAME .` lists what remains.
+4. **Conduct contact.** Replace `REPORT_CONTACT` in `CODE_OF_CONDUCT.md` with a private
+   way to reach the maintainer. A dedicated address keeps a personal one out of public
+   files.
+5. **License.** Check the year and the holder in `LICENSE`.
+6. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
    green run in either place means the same thing.
-4. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
+7. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
    and virtual environments. Keep the `tmp/` and `secret/` rules.
-5. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
-6. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
+8. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
+9. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
    because SSH keys are unreachable from inside agent sandboxes. Run this once, outside
    any sandbox, since sandboxes usually protect `.git/config`.
 
@@ -67,35 +76,36 @@ The template is language agnostic. These steps make it specific to one project.
 
    If `gh` is not on the `PATH` that git sees, give its absolute path, as in
    `!/opt/local/bin/gh auth git-credential`.
-7. **Repository settings.** A template does not carry its settings to the repositories
-   made from it. Apply them to each new repository.
+10. **Repository settings.** A template does not carry its settings to the repositories
+    made from it. Apply them to each new repository.
 
-   ```sh
-   R=sgeos/PROJECT_NAME
-   gh api -X PATCH "repos/$R" -F has_wiki=false -F has_projects=false \
-     -F delete_branch_on_merge=true -F allow_merge_commit=true \
-     -F allow_squash_merge=false -F allow_rebase_merge=false
-   gh api -X PATCH "repos/$R" --input - <<'JSON'
-   {"security_and_analysis": {
-     "secret_scanning": {"status": "enabled"},
-     "secret_scanning_push_protection": {"status": "enabled"}}}
-   JSON
-   gh api -X PUT "repos/$R/vulnerability-alerts"
-   gh api -X POST "repos/$R/rulesets" --input .github/rulesets/main.json
-   gh repo edit "$R" --description "One sentence from above." --add-topic TOPIC1,TOPIC2
-   ```
+    ```sh
+    R=sgeos/PROJECT_NAME
+    gh api -X PATCH "repos/$R" -F has_wiki=false -F has_projects=false \
+      -F delete_branch_on_merge=true -F allow_merge_commit=true \
+      -F allow_squash_merge=false -F allow_rebase_merge=false
+    gh api -X PATCH "repos/$R" --input - <<'JSON'
+    {"security_and_analysis": {
+      "secret_scanning": {"status": "enabled"},
+      "secret_scanning_push_protection": {"status": "enabled"}}}
+    JSON
+    gh api -X PUT "repos/$R/vulnerability-alerts"
+    gh api -X POST "repos/$R/rulesets" --input .github/rulesets/main.json
+    gh repo edit "$R" --description "One sentence from above." --add-topic TOPIC1,TOPIC2
+    ```
 
-   The ruleset forbids deleting `main` and force-pushing to it. Topics make the
-   repository findable by subject, so choose a few, such as its language and domain.
-8. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
-   if it is not installed. Install it locally with the system package manager.
-   To scan for terms that must never be published, list them one per line in
-   `secret/disclosure-terms.txt`, which is never committed.
-9. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
-   before every push. `git push --no-verify` skips it for a work-in-progress push.
-10. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
-   `date-released` at the first release. Delete it otherwise.
-11. **Keleusma family.** If the project belongs to the Keleusma family, add the
-   Appendix B constraint to `CLAUDE.md` and `AGENTS.md`, worded as in `pydromon`.
-12. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
-   work, and delete this checklist.
+    The ruleset forbids deleting `main` and force-pushing to it. Topics make the
+    repository findable by subject, so choose a few, such as its language and domain.
+11. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
+    if it is not installed. Install it locally with the system package manager.
+    To scan for terms that must never be published, list them one per line in
+    `secret/disclosure-terms.txt`, which is never committed.
+12. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
+    before every push. `git push --no-verify` skips it for a work-in-progress push.
+13. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
+    `date-released` at the first release. Delete it otherwise.
+14. **Private context.** If the project belongs to a family of repositories whose
+    private context is kept outside the repository, add that family's constraint to
+    `CLAUDE.md` and `AGENTS.md`.
+15. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
+    work, and delete this checklist.
