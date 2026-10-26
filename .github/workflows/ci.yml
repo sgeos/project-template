@@ -54,6 +54,11 @@ jobs:
       #   with:
       #     python-version: "3.12"
       #
+      # The gate needs shellcheck. GitHub's Ubuntu runners include it, and its macOS
+      # runners do not, so a macOS job installs it first:
+      #
+      # - run: command -v shellcheck >/dev/null || brew install shellcheck
+      #
       # Find the commit for a release tag with
       # `gh api repos/OWNER/ACTION/commits/TAG --jq .sha`, and keep the tag in a comment.
       # Give every job its own timeout-minutes, sized to a few times its usual run, so a

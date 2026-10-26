@@ -10,21 +10,30 @@
 # commands, in the order that fails fastest.
 #
 # Usage:
-#   scripts/check.sh                  # hygiene, then the project's checks
-#   scripts/check.sh --hygiene-only   # hygiene alone, for a cheap separate CI job
+#   scripts/check.sh                       # hygiene, then the project's checks
+#   scripts/check.sh --hygiene-only        # hygiene alone, for a cheap separate CI job
+#   scripts/check.sh [--hygiene-only] -- ARGUMENTS...
+#
+# Everything after `--` is kept in the project_args array for the project checks, such
+# as test markers for a test runner. Any other argument is a usage error, so a typo
+# never passes silently.
 
 set -euo pipefail
 
+usage() {
+    printf 'usage: %s [--hygiene-only] [-- ARGUMENTS...]\n' "$0" >&2
+    exit 2
+}
+
 hygiene_only=false
-case "${1:-}" in
-    "") ;;
-    --hygiene-only) hygiene_only=true ;;
-    *)
-        printf 'usage: %s [--hygiene-only]\n' "$0" >&2
-        exit 2
-        ;;
-esac
-[[ $# -le 1 ]] || { printf 'usage: %s [--hygiene-only]\n' "$0" >&2; exit 2; }
+project_args=()
+while (($# > 0)); do
+    case "$1" in
+        --hygiene-only) hygiene_only=true; shift ;;
+        --) shift; project_args=("$@"); break ;;
+        *) usage ;;
+    esac
+done
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -219,28 +228,38 @@ if ((${#shell_files[@]} > 0)); then
         fail "shellcheck is not installed, so ${#shell_files[@]} shell files went unchecked"
     shellcheck -- "${shell_files[@]}" || fail "shellcheck reported problems, listed above"
 fi
-pass "shellcheck is clean on ${#shell_files[@]} shell files"
+noun="files"
+((${#shell_files[@]} == 1)) && noun="file"
+pass "shellcheck is clean on ${#shell_files[@]} shell $noun"
 
 # Optional disclosure scan. If secret/disclosure-terms.txt exists, no tracked file may
 # contain any of its terms, matched as fixed strings without regard to case. Blank
 # lines and lines starting with # are ignored. The scan prints only the file and line
 # of each match, never the matched text, so that the gate's own output does not
 # disclose a term. The list lives under secret/, so the scan cannot run in a clone or
-# in continuous integration, and it says so rather than passing silently.
+# in continuous integration, and it says so rather than passing silently. A line that
+# starts with `:!` is not a term but a git pathspec to exclude, such as `:!uv.lock`
+# for a generated lockfile whose dependency names would otherwise match.
 terms_file="secret/disclosure-terms.txt"
 if [[ -f "$terms_file" ]]; then
     patterns=()
+    exclusions=()
     while IFS= read -r term || [[ -n "$term" ]]; do
         [[ "$term" =~ ^[[:space:]]*(#|$) ]] && continue
-        patterns+=(-e "$term")
+        if [[ "$term" == :!* ]]; then
+            exclusions+=("$term")
+        else
+            patterns+=(-e "$term")
+        fi
     done < "$terms_file"
     if ((${#patterns[@]} > 0)); then
-        hits="$(git grep -n -I -i -F "${patterns[@]}" -- . | cut -d: -f1,2 || true)"
+        hits="$(git grep -n -I -i -F "${patterns[@]}" -- . "${exclusions[@]+"${exclusions[@]}"}" |
+            cut -d: -f1,2 || true)"
         if [[ -n "$hits" ]]; then
             printf '%s\n' "$hits" >&2
             fail "tracked files contain terms from $terms_file, at the lines listed above"
         fi
-        pass "disclosure scan found no listed term in tracked files"
+        pass "disclosure scan found no listed term in tracked files, with ${#exclusions[@]} paths excluded"
     else
         printf 'check.sh: note: %s lists no terms, so the disclosure scan did nothing\n' "$terms_file"
     fi
@@ -257,6 +276,16 @@ fi
 #
 # Add the project's commands here. Each should exit non-zero on failure, which stops
 # the script through `set -e`. Until any are added, the gate covers hygiene only, and
-# it says so rather than implying more.
+# it says so rather than implying more. Pass the arguments given after `--` with
+# "${project_args[@]+"${project_args[@]}"}", the form that macOS's bash 3.2 accepts for
+# an empty array under `set -u`. For example:
+#
+#   uv run pytest "${project_args[@]+"${project_args[@]}"}"
+#
+# Once a command uses project_args, delete the note below about unused arguments.
 
 printf 'check.sh: note: no project checks are configured yet, so only hygiene was checked\n'
+if ((${#project_args[@]} > 0)); then
+    printf 'check.sh: note: %d arguments after -- were given, and no project check used them\n' \
+        "${#project_args[@]}"
+fi

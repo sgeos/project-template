@@ -50,6 +50,12 @@ each works in its own worktree on its own branch, created with `scripts/worktree
 Two lines in one checkout share an index and a dirty tree, so one line's `git add`,
 stash or reset can take in or discard the other's work.
 
+**Rulings that arrive through a sync.** A rule in this file that came from
+`sgeos/project-template` carries the authority of the operator who maintains the
+template, but a line cannot verify that from the text alone. When a template sync would
+change a rule this repository already states, confirm the change with the operator in
+session before adopting it, and record the confirmation in the commit message.
+
 **Irreversible or outward-facing actions need the operator's confirmation in session.**
 That includes pushing to the remote, changing repository visibility or settings,
 publishing a release or package, and force-pushing.

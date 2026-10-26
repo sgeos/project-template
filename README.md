@@ -96,6 +96,7 @@ accident. Run every command below from the repository root.
       "secret_scanning_push_protection": {"status": "enabled"}}}
     JSON
     gh api -X PUT "repos/$R/vulnerability-alerts"
+    gh api -X PUT "repos/$R/automated-security-fixes"
     gh api -X PUT "repos/$R/private-vulnerability-reporting"
     gh api -X POST "repos/$R/rulesets" --input .github/rulesets/main.json
     gh repo edit "$R" --description "One sentence from above." --add-topic TOPIC1,TOPIC2
@@ -104,19 +105,34 @@ accident. Run every command below from the repository root.
       --description "Left out of generated release notes"
     ```
 
-    Private vulnerability reporting is what makes the advisory link in `SECURITY.md`
-    work. The ruleset forbids deleting `main` and force-pushing to it. The two labels are the
-    ones `.github/release.yml` uses that GitHub does not create by default. Topics make the
-    repository findable by subject, so choose a few, such as its language and domain.
+    Dependabot alerts report vulnerable dependencies, and security updates open a pull
+    request to fix each one. Secret scanning's non-provider patterns stay off by
+    choice, because they match generic strings such as private keys and passwords and
+    are prone to false positives. Turn them on for a project that handles such
+    material. Private vulnerability reporting is what makes the advisory link in
+    `SECURITY.md` work. The ruleset forbids deleting `main` and force-pushing to it.
+    The two labels are the ones `.github/release.yml` uses that GitHub does not create
+    by default. Topics make the repository findable by subject, so choose a few, such
+    as its language and domain.
+    GitHub's community profile reports `issue_template` as absent even though the
+    issue templates are present, because it looks only for the older single-file
+    template. The issue chooser still uses them, so this needs no action.
 11. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
     if it is not installed. Install it locally with the system package manager.
+    GitHub's Ubuntu runners include it, and its macOS runners do not, so a macOS CI
+    job installs it first, as the comment in `ci.yml` shows.
     To scan for terms that must never be published, list them one per line in
     `secret/disclosure-terms.txt`, which is never committed. The gate also needs
     `python3`. Continuous integration additionally lints the workflows with actionlint
     and zizmor, which do not need to be installed locally. Edit `.github/CODEOWNERS` if
-    the maintainer is not `@sgeos`.
+    the maintainer is not `@sgeos`. Arguments after `--`, as in
+    `scripts/check.sh -- -m "not socket"`, reach the project checks through the
+    `project_args` array. A line in the terms file that starts with `:!` excludes a
+    path from the scan, such as `:!uv.lock`.
 12. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
     before every push. `git push --no-verify` skips it for a work-in-progress push.
+    `CHECK_ARGS` passes arguments to the gate from the hook, so an agent inside a
+    sandbox can run the form of the gate the sandbox allows.
 13. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
     `date-released` at the first release. Delete it otherwise.
 14. **Private context.** If the project belongs to a family of repositories whose
