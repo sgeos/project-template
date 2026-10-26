@@ -259,7 +259,9 @@ if [[ -f "$terms_file" ]]; then
             printf '%s\n' "$hits" >&2
             fail "tracked files contain terms from $terms_file, at the lines listed above"
         fi
-        pass "disclosure scan found no listed term in tracked files, with ${#exclusions[@]} paths excluded"
+        excluded="${#exclusions[@]} excluded paths"
+        ((${#exclusions[@]} == 1)) && excluded="1 excluded path"
+        pass "disclosure scan found no listed term in tracked files, with $excluded"
     else
         printf 'check.sh: note: %s lists no terms, so the disclosure scan did nothing\n' "$terms_file"
     fi
