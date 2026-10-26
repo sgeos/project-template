@@ -4,7 +4,14 @@
 #
 # Opt in once per clone with `git config core.hooksPath scripts/hooks`.
 # Skip it for a work-in-progress push with `git push --no-verify`.
+#
+# CHECK_ARGS, if set, is split on spaces and passed to the gate. An agent pushing from
+# inside a sandbox, where tests that need denied capabilities fail, can pass the
+# sandbox form of the gate, for example `CHECK_ARGS="-- -m 'not socket'"` for a pytest
+# project. Otherwise it runs the sandbox form by hand first and then pushes with
+# --no-verify, and says so in its report.
 
 set -eu
 
-exec "$(git rev-parse --show-toplevel)/scripts/check.sh"
+# shellcheck disable=SC2086 # CHECK_ARGS is split on purpose.
+exec "$(git rev-parse --show-toplevel)/scripts/check.sh" ${CHECK_ARGS:-}

@@ -5,10 +5,13 @@
 # feature branch, so parallel work never shares one dirty tree, one index or one
 # running gate.
 #
-# Worktrees are created as siblings of the repository, under
-# ../<repository>-worktrees/<branch>, with each slash in the branch name replaced by a
-# dash, so that `feat/x` and `fix/x` do not collide. Override the parent directory with
-# WORKTREE_BASE and the branch new work starts from with WORKTREE_TRUNK, which
+# Worktrees are created under tmp/worktrees/<branch> in the main checkout, with each
+# slash in the branch name replaced by a dash, so that `feat/x` and `fix/x` do not
+# collide. tmp/ is inside the project, which agent sandboxes usually allow writing, and
+# its contents are ignored, so the trees never show in git status. A tool that does not
+# honour .gitignore may still scan them. Set WORKTREE_BASE for another parent
+# directory, such as ../<repository>-worktrees outside the sandbox. Override the branch
+# new work starts from with WORKTREE_TRUNK, which
 # defaults to main. If the trunk has no local branch, as in a fresh clone, new work
 # starts from origin/<trunk>, and the new branch does not track it.
 #
@@ -21,7 +24,9 @@
 # Failure modes. `rm` refuses a tree with uncommitted or untracked changes, and then
 # refuses to delete a branch that is not merged, because both use git's own safety
 # checks rather than forcing. A new tree has the tracked tmp/ marker but no secret/,
-# which is never in git, so copy whatever it needs by hand.
+# which is never in git, so copy whatever it needs by hand. Inside a sandbox that
+# protects .git/config, `rm` may warn that it could not lock the configuration while
+# deleting the branch. The warning is harmless.
 
 set -euo pipefail
 
@@ -38,8 +43,7 @@ root="$(git rev-parse --show-toplevel)"
 # the common git directory, so that every tree uses the same parent directory.
 common="$(cd "$root" && cd "$(git rev-parse --git-common-dir)" && pwd)"
 main_root="$(dirname "$common")"
-name="$(basename "$main_root")"
-base="${WORKTREE_BASE:-$(dirname "$main_root")/${name}-worktrees}"
+base="${WORKTREE_BASE:-$main_root/tmp/worktrees}"
 trunk="${WORKTREE_TRUNK:-main}"
 
 tree_path() {
