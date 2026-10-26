@@ -102,7 +102,7 @@ accident. Run every command below from the repository root.
 
     Private vulnerability reporting is what makes the advisory link in `SECURITY.md`
     work. The ruleset forbids deleting `main` and force-pushing to it. The two labels are the
-ones `.github/release.yml` uses that GitHub does not create by default. Topics make the
+    ones `.github/release.yml` uses that GitHub does not create by default. Topics make the
     repository findable by subject, so choose a few, such as its language and domain.
 10. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
     if it is not installed. Install it locally with the system package manager.
