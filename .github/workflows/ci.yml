@@ -9,8 +9,13 @@
 # Account load. GitHub-hosted runners share one concurrent-job limit across the whole
 # sgeos account, so one busy repository delays every other. When this workflow grows a
 # matrix, add `max-parallel` to it, and consider `paths-ignore` for changes that no job
-# reads, such as documentation alone. Keep the full matrix on pull requests, and keep
-# runs on main short.
+# reads, such as documentation alone. Run a reduced, fast set on pull requests, and the
+# full matrix on pushes to main, so that every commit on main has a complete result of
+# its own. A pull request that needs the full set before merging opts in with a
+# `full-ci` label, for example with
+# `if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')`.
+# The cheap hygiene part of the gate can run as its own job with
+# `./scripts/check.sh --hygiene-only`.
 
 name: CI
 

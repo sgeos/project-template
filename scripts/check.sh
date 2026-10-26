@@ -5,11 +5,26 @@
 # It exits zero only when every check passes. Each check prints one line on success
 # and an explanation on failure, and the script stops at the first failure.
 #
-# Repository hygiene runs first and needs only git. Add the project's own checks in
-# the marked section below, such as lint, format, type and test commands, in the
-# order that fails fastest.
+# Repository hygiene runs first and needs git, python3 and shellcheck. Add the
+# project's own checks in the marked section below, such as lint, format, type and test
+# commands, in the order that fails fastest.
+#
+# Usage:
+#   scripts/check.sh                  # hygiene, then the project's checks
+#   scripts/check.sh --hygiene-only   # hygiene alone, for a cheap separate CI job
 
 set -euo pipefail
+
+hygiene_only=false
+case "${1:-}" in
+    "") ;;
+    --hygiene-only) hygiene_only=true ;;
+    *)
+        printf 'usage: %s [--hygiene-only]\n' "$0" >&2
+        exit 2
+        ;;
+esac
+[[ $# -le 1 ]] || { printf 'usage: %s [--hygiene-only]\n' "$0" >&2; exit 2; }
 
 cd "$(git rev-parse --show-toplevel)"
 
@@ -80,10 +95,10 @@ fi
 
 # Relative links in tracked Markdown files must resolve to a tracked or present path.
 # External links, mail links and links to an anchor in the same file are not checked,
-# and neither are anchors within another file. Links inside fenced code blocks are
-# skipped. This needs python3, which GitHub's runners and macOS both provide. The
-# program is passed with -c rather than a heredoc, because some agent sandboxes forbid
-# the temporary file that bash writes for a heredoc.
+# and neither are anchors within another file. Links inside fenced code blocks and
+# inline code spans are skipped. This needs python3, which GitHub's runners and macOS
+# both provide. The program is passed with -c rather than a heredoc, because some agent
+# sandboxes forbid the temporary file that bash writes for a heredoc.
 python3 -I -c '
 import pathlib
 import re
@@ -94,17 +109,26 @@ files = subprocess.run(
     ["git", "ls-files", "-z", "--", "*.md"], check=True, capture_output=True
 ).stdout.split(b"\0")
 link = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+# A fence opens with three or more backticks or tildes, and closes only with a run of
+# the same character that is at least as long, so a ``` line inside a ~~~ fence does
+# not close it. Inline code spans are removed before links are matched.
+fence_line = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+code_span = re.compile(r"(`+)(?:(?!\1).)+?\1")
 broken = []
 for raw in filter(None, files):
     path = pathlib.Path(raw.decode())
-    in_fence = False
+    fence = None
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        if line.lstrip().startswith(("```", "~~~")):
-            in_fence = not in_fence
+        opener = fence_line.match(line)
+        if fence is None and opener:
+            fence = opener.group(1)
             continue
-        if in_fence:
+        if fence is not None:
+            closer = fence_line.match(line)
+            if closer and closer.group(1)[0] == fence[0] and len(closer.group(1)) >= len(fence) and not closer.group(2).strip():
+                fence = None
             continue
-        for target in link.findall(line):
+        for target in link.findall(code_span.sub("", line)):
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             target = target.split("#", 1)[0].strip("<>")
@@ -222,6 +246,11 @@ if [[ -f "$terms_file" ]]; then
     fi
 else
     printf 'check.sh: note: no %s, so the disclosure scan was skipped\n' "$terms_file"
+fi
+
+if [[ "$hygiene_only" == true ]]; then
+    printf 'check.sh: note: --hygiene-only, so the project checks were not run\n'
+    exit 0
 fi
 
 # --- Project checks -----------------------------------------------------------------
