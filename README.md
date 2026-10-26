@@ -60,13 +60,17 @@ accident. Run every command below from the repository root.
    which include the badge and License section in this file, `CITATION.cff`,
    `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. The code of conduct's own CC0
    dedication can stay.
-5. **Gate.** Add the project's lint, format, type and test commands to
+5. **Conduct reports, optional.** `CODE_OF_CONDUCT.md` asks reporters to contact the
+   maintainer privately and names no channel. A project that expects outside
+   contributors may name one there, such as a dedicated address. GitHub's private
+   vulnerability reporting is for security issues only, so it is not such a channel.
+6. **Gate.** Add the project's lint, format, type and test commands to
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
    green run in either place means the same thing.
-6. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
+7. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
    and virtual environments. Keep the `tmp/` and `secret/` rules.
-7. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
-8. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
+8. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
+9. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
    because SSH keys are unreachable from inside agent sandboxes. Run this once, outside
    any sandbox, since sandboxes usually protect `.git/config`.
 
@@ -78,7 +82,7 @@ accident. Run every command below from the repository root.
 
    If `gh` is not on the `PATH` that git sees, give its absolute path, as in
    `!/opt/local/bin/gh auth git-credential`.
-9. **Repository settings.** A template does not carry its settings to the repositories
+10. **Repository settings.** A template does not carry its settings to the repositories
     made from it. Apply them to each new repository.
 
     ```sh
@@ -104,19 +108,19 @@ accident. Run every command below from the repository root.
     work. The ruleset forbids deleting `main` and force-pushing to it. The two labels are the
     ones `.github/release.yml` uses that GitHub does not create by default. Topics make the
     repository findable by subject, so choose a few, such as its language and domain.
-10. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
+11. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
     if it is not installed. Install it locally with the system package manager.
     To scan for terms that must never be published, list them one per line in
     `secret/disclosure-terms.txt`, which is never committed. The gate also needs
     `python3`. Continuous integration additionally lints the workflows with actionlint
     and zizmor, which do not need to be installed locally. Edit `.github/CODEOWNERS` if
     the maintainer is not `@sgeos`.
-11. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
+12. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
     before every push. `git push --no-verify` skips it for a work-in-progress push.
-12. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
+13. **Citation.** Keep `CITATION.cff` for work others may cite, and add `version` and
     `date-released` at the first release. Delete it otherwise.
-13. **Private context.** If the project belongs to a family of repositories whose
+14. **Private context.** If the project belongs to a family of repositories whose
     private context is kept outside the repository, add that family's constraint to
     `CLAUDE.md` and `AGENTS.md`.
-14. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
+15. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
     work, and delete this checklist.

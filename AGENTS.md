@@ -18,7 +18,7 @@ making any non-trivial change.
 
 ## Flagged up front
 
-- **Commit once per prompt,** and attribute the assistant that actually contributed.
+- **Commit once per prompt,** with no `Co-Authored-By` trailer.
 - **Ask before outward-facing actions,** such as pushing, changing visibility or
   settings, or publishing.
 - **Scratch directories.** Use `tmp/` for transient files. Its contents are ignored. Never

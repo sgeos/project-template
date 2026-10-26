@@ -38,10 +38,8 @@ operator has modified it.
 `<scope>/<short-description>`, merged into `main` by a no-fast-forward merge through a
 pull request once checks pass. A feature branch may be red between commits. Only its tip
 at merge must be green. Use scoped conventional commits such as `feat:`, `fix:`, `docs:`,
-`test:` and `chore:`. Attribute assisted commits to the assistant that actually
-contributed, with `Co-Authored-By: Claude <noreply@anthropic.com>` for Claude,
-`Co-Authored-By: Codex <noreply@openai.com>` for Codex, and the equivalent line for any
-other assistant.
+`test:` and `chore:`. Commit messages carry no `Co-Authored-By` trailer, at the
+operator's instruction of 2026-10-25, which applies to every repository.
 
 The remote is `https://github.com/sgeos/PROJECT_NAME`. Its git configuration uses the
 GitHub command-line tool as the credential helper, because SSH keys are unreachable from
