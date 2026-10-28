@@ -24,6 +24,8 @@
 # whole.
 .claude/settings.local.json
 .claude/.cc-writes/
+# Claude Code's built-in worktree feature places its worktrees in .claude/worktrees/.
+# Without this rule each one shows as untracked content.
 .claude/worktrees/
 .codex/
 
