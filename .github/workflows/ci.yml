@@ -8,14 +8,20 @@
 #
 # Account load. GitHub-hosted runners share one concurrent-job limit across the whole
 # sgeos account, so one busy repository delays every other. When this workflow grows a
-# matrix, add `max-parallel` to it, and consider `paths-ignore` for changes that no job
-# reads, such as documentation alone. Run a reduced, fast set on pull requests, and the
+# matrix, add `max-parallel` to it. Run a reduced, fast set on pull requests, and the
 # full matrix on pushes to main, so that every commit on main has a complete result of
 # its own. A pull request that needs the full set before merging opts in with a
 # `full-ci` label, for example with
 # `if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-ci')`.
 # The cheap hygiene part of the gate can run as its own job with
 # `./scripts/check.sh --hygiene-only`.
+#
+# Required check. The ruleset requires one check, `CI result`, from the last job below,
+# which always runs and fails when any job it needs failed or was cancelled. GitHub
+# counts a skipped job as passing, so jobs may be skipped on purpose, such as the full
+# set on an unlabelled pull request. A required check must itself never be skipped, and
+# a workflow skipped by `paths-ignore` reports no check at all, so a required check
+# would never arrive. Skip work inside jobs instead, and add every new job to `needs`.
 
 name: CI
 
@@ -91,3 +97,18 @@ jobs:
         with:
           version: 1.31.1
           advanced-security: false
+
+  # The single required check. Keep its name in step with the ruleset.
+  ci-result:
+    name: CI result
+    if: always()
+    needs: [check, workflows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Fail if a needed job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: Report success
+        run: echo "every needed job passed or was skipped on purpose"

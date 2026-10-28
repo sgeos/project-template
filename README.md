@@ -92,11 +92,9 @@ accident. Run every command below from the repository root.
     gh api -X PATCH "repos/$R" -F has_wiki=false -F has_projects=false \
       -F delete_branch_on_merge=true -F allow_merge_commit=true \
       -F allow_squash_merge=false -F allow_rebase_merge=false
-    gh api -X PATCH "repos/$R" --input - <<'JSON'
-    {"security_and_analysis": {
-      "secret_scanning": {"status": "enabled"},
-      "secret_scanning_push_protection": {"status": "enabled"}}}
-    JSON
+    gh api -X PATCH "repos/$R" \
+      -f 'security_and_analysis[secret_scanning][status]=enabled' \
+      -f 'security_and_analysis[secret_scanning_push_protection][status]=enabled'
     gh api -X PUT "repos/$R/vulnerability-alerts"
     gh api -X PUT "repos/$R/automated-security-fixes"
     gh api "repos/$R/automated-security-fixes"  # expect "paused":false
@@ -117,7 +115,10 @@ accident. Run every command below from the repository root.
     choice, because they match generic strings such as private keys and passwords and
     are prone to false positives. Turn them on for a project that handles such
     material. Private vulnerability reporting is what makes the advisory link in
-    `SECURITY.md` work. The ruleset forbids deleting the default branch and force-pushing to it.
+    `SECURITY.md` work. The ruleset forbids deleting the default branch and force-pushing to it,
+    and requires the `CI result` check from `ci.yml`, so a commit reaches the default
+    branch only through a pull request whose checks passed. Apply the ruleset after the
+    first push, and keep the check's name in step with the job if either is renamed.
     The two labels are the ones `.github/release.yml` uses that GitHub does not create
     by default. Topics make the repository findable by subject, so choose a few, such
     as its language and domain.
@@ -135,7 +136,9 @@ accident. Run every command below from the repository root.
     the maintainer is not `@sgeos`. Arguments after `--`, as in
     `scripts/check.sh -- -m "not socket"`, reach the project checks through the
     `project_args` array. A line in the terms file that starts with `:!` excludes a
-    path from the scan, such as `:!uv.lock`.
+    path from the scan, such as `:!uv.lock`. Write the list for the tracked files it
+    scans. A list borrowed from another guard, such as a message filter, may hold words
+    the codebase uses legitimately, so leave those out or exclude their paths.
 12. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
     before every push. `git push --no-verify` skips it for a work-in-progress push.
     `CHECK_ARGS` passes arguments to the gate from the hook, so an agent inside a

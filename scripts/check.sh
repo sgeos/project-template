@@ -158,7 +158,9 @@ pass "relative Markdown links resolve"
 # Text and file hygiene, matching .editorconfig and .gitattributes. Every tracked text
 # file ends with a newline and has no carriage returns, except Windows batch files,
 # which need them, and files other than Markdown have no trailing whitespace, since
-# Markdown uses it for line breaks. No tracked file exceeds MAX_FILE_BYTES, which
+# Markdown uses it for line breaks. A file whose whitespace attribute is unset in
+# .gitattributes, with `-whitespace`, is exempt from the trailing whitespace check, for
+# fixtures that must stay byte for byte. No tracked file exceeds MAX_FILE_BYTES, which
 # defaults to 5 MiB, so a large binary is added deliberately or not at all. A file is
 # text when its first 8 KiB holds no NUL byte, the same test git uses.
 #
@@ -178,6 +180,16 @@ limit = int(os.environ["MAX_FILE_BYTES"])
 listing = subprocess.run(
     ["git", "ls-files", "-s", "-z"], check=True, capture_output=True
 ).stdout.split(b"\0")
+paths = [entry.split(b"\t", 1)[1] for entry in filter(None, listing)]
+attributes = subprocess.run(
+    ["git", "check-attr", "-z", "--stdin", "whitespace"],
+    input=b"\0".join(paths), check=True, capture_output=True,
+).stdout.split(b"\0")
+verbatim = {
+    attributes[i].decode()
+    for i in range(0, len(attributes) - 2, 3)
+    if attributes[i + 2] == b"unset"
+}
 problems = []
 shells = []
 for entry in filter(None, listing):
@@ -202,7 +214,7 @@ for entry in filter(None, listing):
         problems.append(f"{path}: contains carriage returns")
     if not data.endswith(b"\n"):
         problems.append(f"{path}: does not end with a newline")
-    if not path.endswith(".md"):
+    if not path.endswith(".md") and path not in verbatim:
         for number, line in enumerate(data.split(b"\n"), 1):
             if line.rstrip(b" \t") != line:
                 problems.append(f"{path}:{number}: trailing whitespace")
@@ -250,6 +262,10 @@ if [[ -f "$terms_file" ]]; then
     exclusions=()
     while IFS= read -r term || [[ -n "$term" ]]; do
         [[ "$term" =~ ^[[:space:]]*(#|$) ]] && continue
+        # Trim surrounding whitespace, so that a term saved with a trailing space still
+        # matches the word at the end of a line.
+        term="${term#"${term%%[![:space:]]*}"}"
+        term="${term%"${term##*[![:space:]]}"}"
         if [[ "$term" == :!* ]]; then
             exclusions+=("$term")
         else
@@ -257,8 +273,18 @@ if [[ -f "$terms_file" ]]; then
         fi
     done < "$terms_file"
     if ((${#patterns[@]} > 0)); then
-        hits="$(git grep -n -I -i -F "${patterns[@]}" -- . "${exclusions[@]+"${exclusions[@]}"}" |
-            cut -d: -f1,2 || true)"
+        # git grep exits 0 on a match and 1 on none. Any other status is an error, such as
+        # a bad pathspec, and the scan fails closed rather than reporting it as clean.
+        if raw="$(git grep -n -I -i -F "${patterns[@]}" -- . "${exclusions[@]+"${exclusions[@]}"}")"; then
+            grep_status=0
+        else
+            grep_status=$?
+        fi
+        case "$grep_status" in
+            0) hits="$(printf '%s\n' "$raw" | cut -d: -f1,2)" ;;
+            1) hits="" ;;
+            *) fail "git grep exited with status $grep_status, so the disclosure scan could not run" ;;
+        esac
         if [[ -n "$hits" ]]; then
             printf '%s\n' "$hits" >&2
             fail "tracked files contain terms from $terms_file, at the lines listed above"
