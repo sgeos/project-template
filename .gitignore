@@ -21,7 +21,9 @@
 # content. Shared Claude Code configuration, such as .claude/settings.json, skills,
 # agents and commands, is not ignored, so a project can commit it deliberately. Codex's
 # directory holds host-specific settings, such as a context window, and is ignored
-# whole.
+# whole. A project that shares a Codex configuration adds `!.codex/config.toml`
+# below. Codex 0.164.0 applies that file only when the project is marked trusted in
+# the user's own ~/.codex/config.toml.
 .claude/settings.local.json
 .claude/.cc-writes/
 # Claude Code's built-in worktree feature places its worktrees in .claude/worktrees/.

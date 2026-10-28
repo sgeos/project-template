@@ -96,12 +96,16 @@ accident. Run every command below from the repository root.
    `!/opt/local/bin/gh auth git-credential`.
 10. **Repository settings.** A template does not carry its settings to the repositories
     made from it. Apply them to each new repository. On a private repository under
-    GitHub's free plan, the ruleset, secret scanning and private vulnerability
-    reporting are refused. GitHub answered "Upgrade to GitHub Pro or make this
-    repository public" for rulesets on 2026-10-28. Skip those commands, and replace
-    the advisory link in `SECURITY.md` and `.github/ISSUE_TEMPLATE/config.yml` with a
-    channel that works for the people who can see the repository. Its `llms.txt`
-    links reach only those readers too.
+    GitHub's free plan, measured for `sgeos/volaw` on 2026-10-28, the repository
+    flags, description, topics, labels, vulnerability alerts and security updates
+    all work. The ruleset and classic branch protection are both refused with HTTP
+    403, "Upgrade to GitHub Pro or make this repository public". Secret scanning is
+    refused with HTTP 422, and private vulnerability reporting answers 404. Skip
+    those commands, and nothing then enforces the protection of the default branch,
+    so the rules in `CLAUDE.md` are all that guard it. Replace the advisory link in
+    `SECURITY.md` and `.github/ISSUE_TEMPLATE/config.yml` with a channel that works
+    for the people who can see the repository. Its `llms.txt` links reach only those
+    readers too.
 
     ```sh
     R=sgeos/PROJECT_NAME
