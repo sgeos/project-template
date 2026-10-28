@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---|---|
-| Unreleased `main` | Yes |
+| Unreleased, the default branch | Yes |
 
 Replace this table at the first release, and keep it current with each release line.
 

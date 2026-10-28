@@ -103,7 +103,8 @@ else
 fi
 
 # Relative links in tracked Markdown files must resolve to a tracked or present path.
-# External links, mail links and links to an anchor in the same file are not checked,
+# Both inline links, `[text](target)`, and reference definitions, `[name]: target`, are
+# checked. Footnote definitions, `[^1]: text`, are not links. External links, mail links and links to an anchor in the same file are not checked,
 # and neither are anchors within another file. Links inside fenced code blocks and
 # inline code spans are skipped. This needs python3, which GitHub's runners and macOS
 # both provide. The program is passed with -c rather than a heredoc, because some agent
@@ -118,6 +119,7 @@ files = subprocess.run(
     ["git", "ls-files", "-z", "--", "*.md"], check=True, capture_output=True
 ).stdout.split(b"\0")
 link = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+definition = re.compile(r"^ {0,3}\[(?!\^)[^\]]+\]:\s*(<[^>]*>|\S+)")
 # A fence opens with three or more backticks or tildes, and closes only with a run of
 # the same character that is at least as long, so a ``` line inside a ~~~ fence does
 # not close it. Inline code spans are removed before links are matched.
@@ -137,7 +139,9 @@ for raw in filter(None, files):
             if closer and closer.group(1)[0] == fence[0] and len(closer.group(1)) >= len(fence) and not closer.group(2).strip():
                 fence = None
             continue
-        for target in link.findall(code_span.sub("", line)):
+        text = code_span.sub("", line)
+        targets = link.findall(text) + [m.group(1) for m in [definition.match(text)] if m]
+        for target in targets:
             if target.startswith(("http://", "https://", "mailto:", "#")):
                 continue
             target = target.split("#", 1)[0].strip("<>")

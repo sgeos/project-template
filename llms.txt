@@ -5,14 +5,15 @@
 
 This file follows the llms.txt convention. It is an index for language models and agents
 that read the repository from outside, such as a model asked to write code against it.
-Links are absolute, so the file works when fetched on its own.
+Links are absolute, so the file works when fetched on its own. They name `HEAD`,
+which GitHub resolves to the default branch, whatever it is called.
 
 ## Start Here
 
-- [AGENTS.md](https://github.com/sgeos/PROJECT_NAME/blob/main/AGENTS.md): onboarding for any AI assistant.
-- [CLAUDE.md](https://github.com/sgeos/PROJECT_NAME/blob/main/CLAUDE.md): authoritative project context, conventions and per-session protocol.
-- [README](https://github.com/sgeos/PROJECT_NAME/blob/main/README.md): project overview and quick start.
+- [AGENTS.md](https://github.com/sgeos/PROJECT_NAME/blob/HEAD/AGENTS.md): onboarding for any AI assistant.
+- [CLAUDE.md](https://github.com/sgeos/PROJECT_NAME/blob/HEAD/CLAUDE.md): authoritative project context, conventions and per-session protocol.
+- [README](https://github.com/sgeos/PROJECT_NAME/blob/HEAD/README.md): project overview and quick start.
 
 ## Documentation
 
-- [Documentation index](https://github.com/sgeos/PROJECT_NAME/blob/main/docs/README.md): architecture, decisions, roadmap and process.
+- [Documentation index](https://github.com/sgeos/PROJECT_NAME/blob/HEAD/docs/README.md): architecture, decisions, roadmap and process.
