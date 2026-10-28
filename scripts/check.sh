@@ -13,23 +13,28 @@
 #   scripts/check.sh                       # hygiene, then the project's checks
 #   scripts/check.sh --hygiene-only        # hygiene alone, for a cheap separate CI job
 #   scripts/check.sh [--hygiene-only] -- ARGUMENTS...
+#   scripts/check.sh --history --hygiene-only   # scan every commit, before going public
 #
 # Everything after `--` is kept in the project_args array for the project checks, such
 # as test markers for a test runner. Any other argument is a usage error, so a typo
-# never passes silently.
+# never passes silently. --history makes the disclosure scan search every commit
+# reachable from any ref, not only the tracked files, which matters before a
+# repository with history is first made public.
 
 set -euo pipefail
 
 usage() {
-    printf 'usage: %s [--hygiene-only] [-- ARGUMENTS...]\n' "$0" >&2
+    printf 'usage: %s [--history] [--hygiene-only] [-- ARGUMENTS...]\n' "$0" >&2
     exit 2
 }
 
 hygiene_only=false
+history=false
 project_args=()
 while (($# > 0)); do
     case "$1" in
         --hygiene-only) hygiene_only=true; shift ;;
+        --history) history=true; shift ;;
         --) shift; project_args=("$@"); break ;;
         *) usage ;;
     esac
@@ -104,8 +109,9 @@ fi
 
 # Relative links in tracked Markdown files must resolve to a tracked or present path.
 # Both inline links, `[text](target)`, and reference definitions, `[name]: target`, are
-# checked. Footnote definitions, `[^1]: text`, are not links. External links, mail links and links to an anchor in the same file are not checked,
-# and neither are anchors within another file. Links inside fenced code blocks and
+# checked. Footnote definitions, `[^1]: text`, are not links. External links, mail
+# links and links to an anchor in the same file are not checked, and neither are
+# anchors within another file. Links inside fenced code blocks and
 # inline code spans are skipped. This needs python3, which GitHub's runners and macOS
 # both provide. The program is passed with -c rather than a heredoc, because some agent
 # sandboxes forbid the temporary file that bash writes for a heredoc.
@@ -136,7 +142,8 @@ for raw in filter(None, files):
             continue
         if fence is not None:
             closer = fence_line.match(line)
-            if closer and closer.group(1)[0] == fence[0] and len(closer.group(1)) >= len(fence) and not closer.group(2).strip():
+            run = closer.group(1) if closer else ""
+            if run and run[0] == fence[0] and len(run) >= len(fence) and not closer.group(2).strip():
                 fence = None
             continue
         text = code_span.sub("", line)
@@ -275,28 +282,41 @@ if [[ -f "$terms_file" ]]; then
     if ((${#patterns[@]} > 0)); then
         # git grep exits 0 on a match and 1 on none. Any other status is an error, such as
         # a bad pathspec, and the scan fails closed rather than reporting it as clean.
-        if raw="$(git grep -n -I -i -F "${patterns[@]}" -- . "${exclusions[@]+"${exclusions[@]}"}")"; then
+        # With --history, every commit is searched, and each hit names its commit first.
+        revisions=()
+        fields=1,2
+        scope="tracked files"
+        if [[ "$history" == true ]]; then
+            while IFS= read -r revision; do
+                revisions+=("$revision")
+            done < <(git rev-list --all)
+            fields=1-3
+            scope="the history of ${#revisions[@]} commits"
+        fi
+        if raw="$(git grep -n -I -i -F "${patterns[@]}" "${revisions[@]+"${revisions[@]}"}" -- . \
+            "${exclusions[@]+"${exclusions[@]}"}")"; then
             grep_status=0
         else
             grep_status=$?
         fi
         case "$grep_status" in
-            0) hits="$(printf '%s\n' "$raw" | cut -d: -f1,2)" ;;
+            0) hits="$(printf '%s\n' "$raw" | cut -d: -f"$fields")" ;;
             1) hits="" ;;
             *) fail "git grep exited with status $grep_status, so the disclosure scan could not run" ;;
         esac
         if [[ -n "$hits" ]]; then
             printf '%s\n' "$hits" >&2
-            fail "tracked files contain terms from $terms_file, at the lines listed above"
+            fail "terms from $terms_file appear in $scope, at the lines listed above"
         fi
         excluded="${#exclusions[@]} excluded paths"
         ((${#exclusions[@]} == 1)) && excluded="1 excluded path"
-        pass "disclosure scan found no listed term in tracked files, with $excluded"
+        pass "disclosure scan found no listed term in $scope, with $excluded"
     else
         printf 'check.sh: note: %s lists no terms, so the disclosure scan did nothing\n' "$terms_file"
     fi
 else
     printf 'check.sh: note: no %s, so the disclosure scan was skipped\n' "$terms_file"
+    [[ "$history" == false ]] || fail "--history was given, but there is no $terms_file to scan with"
 fi
 
 if [[ "$hygiene_only" == true ]]; then
@@ -306,13 +326,15 @@ fi
 
 # --- Project checks -----------------------------------------------------------------
 #
-# Add the project's commands here. Each should exit non-zero on failure, which stops
-# the script through `set -e`. Until any are added, the gate covers hygiene only, and
-# it says so rather than implying more. Pass the arguments given after `--` with
-# "${project_args[@]+"${project_args[@]}"}", the form that macOS's bash 3.2 accepts for
-# an empty array under `set -u`. For example:
+# Add the project's commands here. Follow each with `|| fail` and then `pass`, so that
+# it prints one line either way, as the header promises. A bare command would still
+# stop the gate through `set -e`, but without a FAIL line. Until any are added, the
+# gate covers hygiene only, and it says so rather than implying more. Pass the
+# arguments given after `--` with "${project_args[@]+"${project_args[@]}"}", the form
+# that macOS's bash 3.2 accepts for an empty array under `set -u`. For example:
 #
-#   uv run pytest "${project_args[@]+"${project_args[@]}"}"
+#   uv run pytest "${project_args[@]+"${project_args[@]}"}" || fail "tests failed"
+#   pass "tests pass"
 #
 # Once a command uses project_args, delete the note below about unused arguments.
 

@@ -60,6 +60,14 @@ jobs:
       #   with:
       #     python-version: "3.12"
       #
+      # or, for Rust. Pinned by hash, rust-toolchain cannot read the toolchain from the
+      # ref name, so it needs the toolchain input:
+      #
+      # - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable, 2026-10-16
+      #   with:
+      #     toolchain: stable
+      # - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      #
       # The gate needs shellcheck. GitHub's Ubuntu runners include it, and its macOS
       # runners do not, so a macOS job installs it first:
       #

@@ -8,5 +8,5 @@ All notable changes are recorded here. The format follows
 
 ### Added
 
-- The repository, seeded from `sgeos/project-template`.
+- The repository, seeded from `sgeos/project-template` at `TEMPLATE_COMMIT`.
 

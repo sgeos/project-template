@@ -24,6 +24,7 @@
 # whole.
 .claude/settings.local.json
 .claude/.cc-writes/
+.claude/worktrees/
 .codex/
 
 # Operating system and editor droppings.
