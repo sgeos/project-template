@@ -127,7 +127,9 @@ accident. Run every command below from the repository root.
     force-pushing to it, and requires the `CI result` check from `ci.yml`, so a commit
     reaches the default branch only through a pull request whose checks passed. Apply
     the ruleset after the first push, and keep the check's name in step with the job
-    if either is renamed.
+    if either is renamed. The ruleset does not require linear history, and should not
+    for a project that brings releases in by merge commit. GitHub refuses, with a 422
+    error, to turn off squash and rebase merges while a rule requires linear history.
     The two labels are the ones `.github/release.yml` uses that GitHub does not create
     by default. Topics make the repository findable by subject, so choose a few, such
     as its language and domain.
