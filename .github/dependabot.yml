@@ -7,6 +7,10 @@
 # `npm`, with the same schedule, cooldown and grouping. A project that pins its
 # dependencies exactly by decision may leave them out and update them by hand, and
 # should say so here.
+#
+# Dependabot opens its pull requests against the default branch. A project that
+# integrates on a version branch adds `target-branch: v0.2.3`, or whichever branch is
+# current, to each entry, and moves it when that branch changes.
 version: 2
 updates:
   - package-ecosystem: github-actions
