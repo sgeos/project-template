@@ -54,7 +54,9 @@ accident. Run every command below from the repository root.
    project will show the template's status as its own.
 3. **Placeholders.** Replace `PROJECT_NAME` everywhere, and the placeholder text in
    `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
-   `git grep -n PROJECT_NAME` lists what remains.
+   `git grep -n PROJECT_NAME` lists what remains. If the default branch is not `main`,
+   also change the branch strategy in `CLAUDE.md`. The ruleset, `llms.txt` and
+   `SECURITY.md` already name the default branch rather than `main`.
 4. **License.** Check the year and the holder in `LICENSE`. For a licence other than
    0BSD, also change every other statement of it. `git grep -n 0BSD` lists them,
    which include the badge and License section in this file, `CITATION.cff`,
@@ -97,8 +99,9 @@ accident. Run every command below from the repository root.
     JSON
     gh api -X PUT "repos/$R/vulnerability-alerts"
     gh api -X PUT "repos/$R/automated-security-fixes"
+    gh api "repos/$R/automated-security-fixes"  # expect "paused":false
     gh api -X PUT "repos/$R/private-vulnerability-reporting"
-    gh api -X POST "repos/$R/rulesets" --input .github/rulesets/main.json
+    gh api -X POST "repos/$R/rulesets" --input .github/rulesets/default-branch.json
     gh repo edit "$R" --description "One sentence from above." --add-topic TOPIC1,TOPIC2
     gh label create breaking -R "$R" --color B60205 --description "Breaks compatibility"
     gh label create ignore-for-release -R "$R" --color EDEDED \
@@ -106,11 +109,15 @@ accident. Run every command below from the repository root.
     ```
 
     Dependabot alerts report vulnerable dependencies, and security updates open a pull
-    request to fix each one. Secret scanning's non-provider patterns stay off by
+    request to fix each one. GitHub pauses security updates on a repository whose
+    Dependabot pull requests have gone unanswered, and a `PUT` alone may leave them
+    paused while reporting success. If the read-back shows `"paused":true`, run
+    `gh api -X DELETE "repos/$R/automated-security-fixes"` and then the `PUT` again.
+    Secret scanning's non-provider patterns stay off by
     choice, because they match generic strings such as private keys and passwords and
     are prone to false positives. Turn them on for a project that handles such
     material. Private vulnerability reporting is what makes the advisory link in
-    `SECURITY.md` work. The ruleset forbids deleting `main` and force-pushing to it.
+    `SECURITY.md` work. The ruleset forbids deleting the default branch and force-pushing to it.
     The two labels are the ones `.github/release.yml` uses that GitHub does not create
     by default. Topics make the repository findable by subject, so choose a few, such
     as its language and domain.
