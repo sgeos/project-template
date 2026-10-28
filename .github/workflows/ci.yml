@@ -22,6 +22,10 @@
 # set on an unlabelled pull request. A required check must itself never be skipped, and
 # a workflow skipped by `paths-ignore` reports no check at all, so a required check
 # would never arrive. Skip work inside jobs instead, and add every new job to `needs`.
+# A project that fast-forwards main instead of merging pull requests must run CI on its
+# branches, for example with `push` and no branch filter, so that the commit it pushes
+# to main already carries a passing `CI result`. Otherwise the required check blocks
+# the push.
 
 name: CI
 

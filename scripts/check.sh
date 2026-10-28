@@ -124,7 +124,7 @@ import sys
 files = subprocess.run(
     ["git", "ls-files", "-z", "--", "*.md"], check=True, capture_output=True
 ).stdout.split(b"\0")
-link = re.compile(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+link = re.compile(r"\]\((<[^>]*>|[^)\s]+)(?:\s+\"[^\"]*\")?\)")
 definition = re.compile(r"^ {0,3}\[(?!\^)[^\]]+\]:\s*(<[^>]*>|\S+)")
 # A fence opens with three or more backticks or tildes, and closes only with a run of
 # the same character that is at least as long, so a ``` line inside a ~~~ fence does
@@ -135,7 +135,12 @@ broken = []
 for raw in filter(None, files):
     path = pathlib.Path(raw.decode())
     fence = None
-    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    try:
+        content = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        broken.append(f"{path}: not valid UTF-8, so its links were not checked ({error.reason})")
+        continue
+    for number, line in enumerate(content.splitlines(), 1):
         opener = fence_line.match(line)
         if fence is None and opener:
             fence = opener.group(1)

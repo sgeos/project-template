@@ -65,7 +65,8 @@ accident. Run every command below from the repository root.
    0BSD, also change every other statement of it. `git grep -n 0BSD` lists them,
    which include the badge and License section in this file, `CITATION.cff`,
    `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. The code of conduct's own CC0
-   dedication can stay.
+   dedication can stay. A private project with no licence deletes `LICENSE` and
+   rewrites those statements too, rather than leaving 0BSD in their prose.
 5. **Conduct reports, optional.** `CODE_OF_CONDUCT.md` asks reporters to contact the
    maintainer privately and names no channel. A project that expects outside
    contributors may name one there, such as a dedicated address. GitHub's private
@@ -94,7 +95,13 @@ accident. Run every command below from the repository root.
    If `gh` is not on the `PATH` that git sees, give its absolute path, as in
    `!/opt/local/bin/gh auth git-credential`.
 10. **Repository settings.** A template does not carry its settings to the repositories
-    made from it. Apply them to each new repository.
+    made from it. Apply them to each new repository. On a private repository under
+    GitHub's free plan, the ruleset, secret scanning and private vulnerability
+    reporting are refused. GitHub answered "Upgrade to GitHub Pro or make this
+    repository public" for rulesets on 2026-10-28. Skip those commands, and replace
+    the advisory link in `SECURITY.md` and `.github/ISSUE_TEMPLATE/config.yml` with a
+    channel that works for the people who can see the repository. Its `llms.txt`
+    links reach only those readers too.
 
     ```sh
     R=sgeos/PROJECT_NAME
@@ -188,6 +195,14 @@ The steps above assume a new, empty repository. To bring an existing project in 
   project as it is, not as empty.
 - **Leave out** this checklist and the template's README, and any file the project
   declines, saying so in the sync's commit message.
+- **Keep what the project already has** where the template only offers a default,
+  such as an existing task log, which stays where it is and is not replaced, and an
+  integration strategy chosen by the operator, such as linear history. Adjust the
+  template's files to it, as the comments in `ci.yml` describe for fast-forward
+  merges.
+- **Run the gate in place.** Copy `scripts/check.sh` into the sync branch, read it,
+  and run it there. Some agent sandboxes refuse to run a script from a scratch clone
+  of another repository, because they treat it as external code.
 - **Follow steps 9, 10 and 16,** which apply to an existing repository too. A rule
   that would change one the project already states is confirmed with the operator
   first, as `CLAUDE.md` says.
