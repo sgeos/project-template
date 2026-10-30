@@ -40,4 +40,7 @@ Thumbs.db
 nvim.log
 
 # Add language and tool entries below, such as build output, dependency
-# directories and virtual environments.
+# directories and virtual environments. Write each without a trailing slash, as
+# `/target` rather than `/target/`, because scripts/scratch.sh may replace the
+# directory with a symbolic link to a scratch volume, and a pattern ending in a slash
+# matches only a directory.
