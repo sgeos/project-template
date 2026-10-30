@@ -10,8 +10,11 @@
 # collide. tmp/ is inside the project, which agent sandboxes usually allow writing, and
 # its contents are ignored, so the trees never show in git status. A tool that does not
 # honour .gitignore may still scan them. Set WORKTREE_BASE for another parent
-# directory, such as ../<repository>-worktrees outside the sandbox. Override the branch
-# new work starts from with WORKTREE_TRUNK, which
+# directory, such as ../<repository>-worktrees outside the sandbox. A project with
+# relative paths to sibling repositories, such as a Cargo path dependency on
+# ../other/crate, needs its trees at the same depth as the main checkout, so it sets
+# WORKTREE_BASE=.., and chooses branch names that cannot collide with a sibling's
+# directory name. Override the branch new work starts from with WORKTREE_TRUNK, which
 # defaults to main. If the trunk has no local branch, as in a fresh clone, new work
 # starts from origin/<trunk>, and the new branch does not track it.
 #

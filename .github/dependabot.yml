@@ -6,7 +6,9 @@
 # Add the project's own package ecosystem below, for example `cargo`, `uv`, `pip` or
 # `npm`, with the same schedule, cooldown and grouping. A project that pins its
 # dependencies exactly by decision may leave them out and update them by hand, and
-# should say so here.
+# should say so here. So may a project whose manifest has path dependencies outside
+# the repository, such as a Cargo dependency on ../other/crate, because Dependabot
+# checks out only this repository and fails with path_dependencies_not_reachable.
 #
 # Dependabot opens its pull requests against the default branch. A project that
 # integrates on a version branch adds `target-branch: v0.2.3`, or whichever branch is

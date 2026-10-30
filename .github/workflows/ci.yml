@@ -22,6 +22,10 @@
 # set on an unlabelled pull request. A required check must itself never be skipped, and
 # a workflow skipped by `paths-ignore` reports no check at all, so a required check
 # would never arrive. Skip work inside jobs instead, and add every new job to `needs`.
+# A project that fast-forwards main instead of merging pull requests must run CI on its
+# branches, for example with `push` and no branch filter, so that the commit it pushes
+# to main already carries a passing `CI result`. Otherwise the required check blocks
+# the push.
 
 name: CI
 
@@ -59,6 +63,14 @@ jobs:
       # - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       #   with:
       #     python-version: "3.12"
+      #
+      # or, for Rust. Pinned by hash, rust-toolchain cannot read the toolchain from the
+      # ref name, so it needs the toolchain input:
+      #
+      # - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable, 2026-10-16
+      #   with:
+      #     toolchain: stable
+      # - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       #
       # The gate needs shellcheck. GitHub's Ubuntu runners include it, and its macOS
       # runners do not, so a macOS job installs it first:

@@ -53,15 +53,20 @@ accident. Run every command below from the repository root.
    page shows a working badge. Point both of its URLs at the new repository, or the
    project will show the template's status as its own.
 3. **Placeholders.** Replace `PROJECT_NAME` everywhere, and the placeholder text in
-   `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`.
-   `git grep -n PROJECT_NAME` lists what remains. If the default branch is not `main`,
-   also change the branch strategy in `CLAUDE.md`. The ruleset, `llms.txt` and
-   `SECURITY.md` already name the default branch rather than `main`.
+   `CLAUDE.md`, `SECURITY.md`, `CITATION.cff`, `llms.txt` and `docs/`. Replace
+   `TEMPLATE_COMMIT` in `CHANGELOG.md` with the template commit the project starts
+   from, as given by `gh api repos/sgeos/project-template/commits/main --jq .sha`, so
+   that the next sync has a base to compare against. Each later sync adds a changelog
+   line naming the commit it synced to. `git grep -n -e PROJECT_NAME -e TEMPLATE_COMMIT`
+   lists what remains. If the default branch is not `main`, also change the branch
+   strategy in `CLAUDE.md`. The ruleset, `llms.txt` and `SECURITY.md` already name
+   the default branch rather than `main`.
 4. **License.** Check the year and the holder in `LICENSE`. For a licence other than
    0BSD, also change every other statement of it. `git grep -n 0BSD` lists them,
    which include the badge and License section in this file, `CITATION.cff`,
    `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. The code of conduct's own CC0
-   dedication can stay.
+   dedication can stay. A private project with no licence deletes `LICENSE` and
+   rewrites those statements too, rather than leaving 0BSD in their prose.
 5. **Conduct reports, optional.** `CODE_OF_CONDUCT.md` asks reporters to contact the
    maintainer privately and names no channel. A project that expects outside
    contributors may name one there, such as a dedicated address. GitHub's private
@@ -76,8 +81,13 @@ accident. Run every command below from the repository root.
    because SSH keys are unreachable from inside agent sandboxes. Run this once, outside
    any sandbox, since sandboxes usually protect `.git/config`.
 
+   A repository made with `gh repo create --template` already exists on GitHub. For
+   one made otherwise, create it first, private until step 16 has been done:
+
    ```sh
-   git remote set-url origin https://github.com/sgeos/PROJECT_NAME.git
+   gh repo create sgeos/PROJECT_NAME --private
+   URL=https://github.com/sgeos/PROJECT_NAME.git
+   git remote add origin "$URL" 2>/dev/null || git remote set-url origin "$URL"
    git config credential.https://github.com.helper ''
    git config --add credential.https://github.com.helper '!gh auth git-credential'
    ```
@@ -85,7 +95,17 @@ accident. Run every command below from the repository root.
    If `gh` is not on the `PATH` that git sees, give its absolute path, as in
    `!/opt/local/bin/gh auth git-credential`.
 10. **Repository settings.** A template does not carry its settings to the repositories
-    made from it. Apply them to each new repository.
+    made from it. Apply them to each new repository. On a private repository under
+    GitHub's free plan, measured for `sgeos/volaw` on 2026-10-28, the repository
+    flags, description, topics, labels, vulnerability alerts and security updates
+    all work. The ruleset and classic branch protection are both refused with HTTP
+    403, "Upgrade to GitHub Pro or make this repository public". Secret scanning is
+    refused with HTTP 422, and private vulnerability reporting answers 404. Skip
+    those commands, and nothing then enforces the protection of the default branch,
+    so the rules in `CLAUDE.md` are all that guard it. Replace the advisory link in
+    `SECURITY.md` and `.github/ISSUE_TEMPLATE/config.yml` with a channel that works
+    for the people who can see the repository. Its `llms.txt` links reach only those
+    readers too.
 
     ```sh
     R=sgeos/PROJECT_NAME
@@ -111,14 +131,16 @@ accident. Run every command below from the repository root.
     Dependabot pull requests have gone unanswered, and a `PUT` alone may leave them
     paused while reporting success. If the read-back shows `"paused":true`, run
     `gh api -X DELETE "repos/$R/automated-security-fixes"` and then the `PUT` again.
-    Secret scanning's non-provider patterns stay off by
-    choice, because they match generic strings such as private keys and passwords and
-    are prone to false positives. Turn them on for a project that handles such
-    material. Private vulnerability reporting is what makes the advisory link in
-    `SECURITY.md` work. The ruleset forbids deleting the default branch and force-pushing to it,
-    and requires the `CI result` check from `ci.yml`, so a commit reaches the default
-    branch only through a pull request whose checks passed. Apply the ruleset after the
-    first push, and keep the check's name in step with the job if either is renamed.
+    Secret scanning's non-provider patterns stay off by choice, because they match
+    generic strings such as private keys and passwords and are prone to false
+    positives. Turn them on for a project that handles such material. Private vulnerability reporting is what makes the advisory link in
+    `SECURITY.md` work. The ruleset forbids deleting the default branch and
+    force-pushing to it, and requires the `CI result` check from `ci.yml`, so a commit
+    reaches the default branch only through a pull request whose checks passed. Apply
+    the ruleset after the first push, and keep the check's name in step with the job
+    if either is renamed. The ruleset does not require linear history, and should not
+    for a project that brings releases in by merge commit. GitHub refuses, with a 422
+    error, to turn off squash and rebase merges while a rule requires linear history.
     The two labels are the ones `.github/release.yml` uses that GitHub does not create
     by default. Topics make the repository findable by subject, so choose a few, such
     as its language and domain.
@@ -128,7 +150,10 @@ accident. Run every command below from the repository root.
 11. **Gate tools.** The gate runs `shellcheck` on every tracked shell script and fails
     if it is not installed. Install it locally with the system package manager.
     GitHub's Ubuntu runners include it, and its macOS runners do not, so a macOS CI
-    job installs it first, as the comment in `ci.yml` shows.
+    job installs it first, as the comment in `ci.yml` shows. A Rust project on a
+    machine whose `RUSTC_WRAPPER` is `sccache` may see cargo fail inside an agent
+    sandbox with "Operation not permitted". Setting `RUSTC_WRAPPER=` to empty for that
+    command works around it.
     To scan for terms that must never be published, list them one per line in
     `secret/disclosure-terms.txt`, which is never committed. The gate also needs
     `python3`. Continuous integration additionally lints the workflows with actionlint
@@ -149,4 +174,39 @@ accident. Run every command below from the repository root.
     private context is kept outside the repository, add that family's constraint to
     `CLAUDE.md` and `AGENTS.md`.
 15. **First handoff.** Rewrite `docs/process/HANDOFF.md` for the line that will carry the
-    work, and delete this checklist.
+    work.
+16. **Before going public.** Making a repository public publishes its whole history,
+    not only its current files. For a repository with history, especially one split
+    from a private repository, run `scripts/check.sh --history --hygiene-only` with a
+    terms list in place, which searches every commit, and a credential scanner over
+    the history, such as `gitleaks git`. Change the visibility only when both are
+    clean, or after rewriting the history. Then delete this checklist.
+
+### Adopting the template in an existing repository
+
+The steps above assume a new, empty repository. To bring an existing project in line:
+
+- **Overwrite** the files the project has not changed, such as `LICENSE` if it is
+  0BSD, `CODE_OF_CONDUCT.md`, `scripts/check.sh`'s hygiene section,
+  `scripts/worktree.sh`, `scripts/hooks/`, the issue templates and `release.yml`.
+- **Merge** the files the project has made its own: `README.md`, `.gitignore`,
+  `.gitattributes`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `CLAUDE.md`,
+  `AGENTS.md` and the project section of `scripts/check.sh`. Keep the project's
+  content and adopt the template's rules where they do not conflict.
+- **Rewrite the seed language.** `CHANGELOG.md` gains a line such as "Synced with
+  `sgeos/project-template` at `TEMPLATE_COMMIT`" rather than "seeded". The Status
+  sections of `CLAUDE.md`, `README.md` and `docs/process/HANDOFF.md` describe the
+  project as it is, not as empty.
+- **Leave out** this checklist and the template's README, and any file the project
+  declines, saying so in the sync's commit message.
+- **Keep what the project already has** where the template only offers a default,
+  such as an existing task log, which stays where it is and is not replaced, and an
+  integration strategy chosen by the operator, such as linear history. Adjust the
+  template's files to it, as the comments in `ci.yml` describe for fast-forward
+  merges.
+- **Run the gate in place.** Copy `scripts/check.sh` into the sync branch, read it,
+  and run it there. Some agent sandboxes refuse to run a script from a scratch clone
+  of another repository, because they treat it as external code.
+- **Follow steps 9, 10 and 16,** which apply to an existing repository too. A rule
+  that would change one the project already states is confirmed with the operator
+  first, as `CLAUDE.md` says.
