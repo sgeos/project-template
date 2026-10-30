@@ -106,6 +106,26 @@ gate also fails when a tracked file contains any of those terms, and it prints o
 file and line. The scan cannot run in a clone or in continuous integration, which do not
 have the list, and the gate says so when it skips.
 
+## Build Output on a Scratch Volume
+
+A machine may keep build output on a separate volume with a quota, so that it fills that
+volume instead of the system disk. When `SCRATCH_BASE` is set, `scripts/scratch.sh link`
+moves each directory named in `SCRATCH_DIRS`, `target` by default, to
+`$SCRATCH_BASE/<repository>/<tree>/` and leaves a symbolic link in the tree, and
+`scripts/worktree.sh new` does so for every new worktree. Without `SCRATCH_BASE`, build
+output stays in the tree and nothing changes.
+
+- **Only rebuildable output goes there.** Never move `tmp/`, `secret/` or anything else
+  that holds work, because the scratch volume is meant to be filled and pruned.
+- **A clean deletes the link.** `cargo clean`, and any command that removes the build
+  directory, deletes the link rather than the files, and the next build recreates a real
+  directory in the tree. Run `scripts/scratch.sh link` after a clean and before building,
+  and check `scripts/scratch.sh status` when the disk fills unexpectedly.
+- **The sandbox must allow it.** The agent sandbox resolves the link to its real path,
+  so a build that is refused there needs `SCRATCH_BASE` in the sandbox's writable paths.
+  Report the refusal to the operator rather than moving the output back.
+- **Nothing is committed.** The links and the scratch volume are local to the machine.
+
 ## Coding Conventions
 
 - **Types.** Use the strongest type constraints the language offers, and the ecosystem's

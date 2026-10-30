@@ -27,6 +27,7 @@ One sentence that says what this project is and who it is for.
 ```sh
 ./scripts/check.sh                       # the local gate, which continuous integration also runs
 scripts/worktree.sh new feat/some-thing  # an isolated worktree for a parallel line
+scripts/scratch.sh status                # whether build output is linked to a scratch volume
 ```
 
 ## Documentation
@@ -75,7 +76,11 @@ accident. Run every command below from the repository root.
    `scripts/check.sh` where it says so. Continuous integration runs the same script, so a
    green run in either place means the same thing.
 7. **Ignore rules.** Add language and tool entries to `.gitignore`, such as build output
-   and virtual environments. Keep the `tmp/` and `secret/` rules.
+   and virtual environments, without a trailing slash, as `/target` rather than
+   `/target/`, so that they still match when the directory is a link to a scratch
+   volume. Keep the `tmp/` and `secret/` rules. Set `SCRATCH_DIRS` in the project's
+   Common Commands in `CLAUDE.md` if its build output is not `target`, such as
+   `SCRATCH_DIRS="build node_modules"`.
 8. **Dependencies.** Add the project's package ecosystem to `.github/dependabot.yml`.
 9. **Remote.** Use HTTPS with the GitHub command-line tool as the credential helper,
    because SSH keys are unreachable from inside agent sandboxes. Run this once, outside
@@ -188,7 +193,8 @@ The steps above assume a new, empty repository. To bring an existing project in 
 
 - **Overwrite** the files the project has not changed, such as `LICENSE` if it is
   0BSD, `CODE_OF_CONDUCT.md`, `scripts/check.sh`'s hygiene section,
-  `scripts/worktree.sh`, `scripts/hooks/`, the issue templates and `release.yml`.
+  `scripts/worktree.sh`, `scripts/scratch.sh`, `scripts/hooks/`, the issue templates
+  and `release.yml`.
 - **Merge** the files the project has made its own: `README.md`, `.gitignore`,
   `.gitattributes`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `CLAUDE.md`,
   `AGENTS.md` and the project section of `scripts/check.sh`. Keep the project's
