@@ -161,14 +161,20 @@ accident. Run every command below from the repository root.
     command works around it.
     To scan for terms that must never be published, list them one per line in
     `secret/disclosure-terms.txt`, which is never committed. The gate also needs
-    `python3`. Continuous integration additionally lints the workflows with actionlint
+    `python3`, for its Markdown and size checks, for `scripts/scan_binary_terms.py`, which
+    scans binary and gzip-compressed files that `git grep` skips, and for the gate's own
+    tests in `scripts/tests/`. Continuous integration additionally lints the workflows with actionlint
     and zizmor, which do not need to be installed locally. Edit `.github/CODEOWNERS` if
     the maintainer is not `@sgeos`. Arguments after `--`, as in
     `scripts/check.sh -- -m "not socket"`, reach the project checks through the
     `project_args` array. A line in the terms file that starts with `:!` excludes a
     path from the scan, such as `:!uv.lock`. Write the list for the tracked files it
     scans. A list borrowed from another guard, such as a message filter, may hold words
-    the codebase uses legitimately, so leave those out or exclude their paths.
+    the codebase uses legitimately, so leave those out or exclude their paths. A line
+    `blob:` followed by a full object name accepts one known historical blob in the
+    `--history` scan only, where removing it would need a force-push. Note beside it why
+    it cannot be removed. In a worktree without its own list, the gate uses the main
+    checkout's, and `scripts/worktree.sh new` copies `secret/` into each new tree.
 12. **Optional pre-push hook.** `git config core.hooksPath scripts/hooks` runs the gate
     before every push. `git push --no-verify` skips it for a work-in-progress push.
     `CHECK_ARGS` passes arguments to the gate from the hook, so an agent inside a

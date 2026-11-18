@@ -28,8 +28,10 @@
 #
 # Failure modes. `rm` refuses a tree with uncommitted or untracked changes, and then
 # refuses to delete a branch that is not merged, because both use git's own safety
-# checks rather than forcing. A new tree has the tracked tmp/ marker but no secret/,
-# which is never in git, so copy whatever it needs by hand. Inside a sandbox that
+# checks rather than forcing. A new tree has the tracked tmp/ marker, and `new` copies
+# secret/, which is never in git, from the main checkout when it exists there. A later
+# change to the main checkout's secret/ is not copied again, so a line that relies on a
+# changed file refreshes its copy by hand. Inside a sandbox that
 # protects .git/config, `rm` may warn that it could not lock the configuration while
 # deleting the branch. The warning is harmless.
 
@@ -82,6 +84,13 @@ case "$command" in
         git -C "$main_root" worktree add --no-track -b "$2" "$path" "$start" >&2
         if [[ -n "${SCRATCH_BASE:-}" ]]; then
             (cd "$path" && scripts/scratch.sh link) >&2
+        fi
+        # secret/ is never in git, so a new tree lacks the session-start reading and the
+        # gate's terms list. Copy it, keeping its private modes. It stays ignored there,
+        # and `rm` removes it with the tree.
+        if [[ -d "$main_root/secret" ]]; then
+            cp -Rp "$main_root/secret" "$path/secret"
+            printf 'worktree.sh: copied secret/ from the main checkout\n' >&2
         fi
         printf '%s\n' "$path"
         ;;

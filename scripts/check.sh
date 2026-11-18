@@ -267,8 +267,28 @@ pass "shellcheck is clean on ${#shell_files[@]} shell $noun"
 # disclose a term. The list lives under secret/, so the scan cannot run in a clone or
 # in continuous integration, and it says so rather than passing silently. A line that
 # starts with `:!` is not a term but a git pathspec to exclude, such as `:!uv.lock`
-# for a generated lockfile whose dependency names would otherwise match.
+# for a generated lockfile whose dependency names would otherwise match. A line that
+# starts with `blob:` accepts one historical blob by its full object name, for the
+# binary scan's history mode only, where removal would need a history rewrite.
 terms_file="secret/disclosure-terms.txt"
+# Messages name the list by this relative label, never by an absolute path, which would
+# carry the account's home directory into output that a line might paste into a pull
+# request.
+terms_label="$terms_file"
+# A linked worktree has no secret/ unless one was copied in, and a scan that silently
+# lapsed there would be a disclosure risk for every line that works in one. Fall back to
+# the main checkout's list, found through the common git directory. In the main
+# checkout and in a clone the fallback resolves to the same missing path and changes
+# nothing.
+if [[ ! -f "$terms_file" ]]; then
+    common_dir="$(git rev-parse --path-format=absolute --git-common-dir)"
+    main_terms="$(dirname "$common_dir")/$terms_file"
+    if [[ -f "$main_terms" ]]; then
+        terms_file="$main_terms"
+        terms_label="the main checkout's $terms_label"
+        printf 'check.sh: note: using %s\n' "$terms_label"
+    fi
+fi
 if [[ -f "$terms_file" ]]; then
     patterns=()
     exclusions=()
@@ -280,6 +300,9 @@ if [[ -f "$terms_file" ]]; then
         term="${term%"${term##*[![:space:]]}"}"
         if [[ "$term" == :!* ]]; then
             exclusions+=("$term")
+        elif [[ "$term" == blob:* ]]; then
+            # An accepted historical blob, read by scripts/scan_binary_terms.py.
+            continue
         else
             patterns+=(-e "$term")
         fi
@@ -311,18 +334,39 @@ if [[ -f "$terms_file" ]]; then
         esac
         if [[ -n "$hits" ]]; then
             printf '%s\n' "$hits" >&2
-            fail "terms from $terms_file appear in $scope, at the lines listed above"
+            fail "terms from $terms_label appear in $scope, at the lines listed above"
         fi
         excluded="${#exclusions[@]} excluded paths"
         ((${#exclusions[@]} == 1)) && excluded="1 excluded path"
         pass "disclosure scan found no listed term in $scope, with $excluded"
+        # git grep -I skips binary files, so a compiled or compressed file is invisible
+        # to the scan above. Scan those files separately, printing only paths. Status 1
+        # is a match, and any other failure means the scan could not run. Both fail the
+        # gate.
+        binary_args=("$terms_file")
+        [[ "$history" == false ]] || binary_args+=(--history)
+        if python3 -I -B scripts/scan_binary_terms.py "${binary_args[@]}"; then
+            binary_status=0
+        else
+            binary_status=$?
+        fi
+        case "$binary_status" in
+            0) pass "no listed term in binary or compressed files in $scope" ;;
+            1) fail "terms from $terms_label appear in binary or compressed files in $scope, at the paths listed above" ;;
+            *) fail "the binary and compressed scan could not run, with status $binary_status" ;;
+        esac
     else
-        printf 'check.sh: note: %s lists no terms, so the disclosure scan did nothing\n' "$terms_file"
+        printf 'check.sh: note: %s lists no terms, so the disclosure scan did nothing\n' "$terms_label"
     fi
 else
-    printf 'check.sh: note: no %s, so the disclosure scan was skipped\n' "$terms_file"
-    [[ "$history" == false ]] || fail "--history was given, but there is no $terms_file to scan with"
+    printf 'check.sh: note: no %s, so the disclosure scan was skipped\n' "$terms_label"
+    [[ "$history" == false ]] || fail "--history was given, but there is no $terms_label to scan with"
 fi
+
+# The gate's own tests, such as those of scripts/scan_binary_terms.py. They need only
+# python3, and run here so that a broken scanner cannot pass unnoticed.
+python3 -I -B -m unittest discover -s scripts/tests -q || fail "the gate's own tests failed, as listed above"
+pass "the gate's own tests pass"
 
 if [[ "$hygiene_only" == true ]]; then
     printf 'check.sh: note: --hygiene-only, so the project checks were not run\n'
