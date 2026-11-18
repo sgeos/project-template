@@ -25,8 +25,12 @@ first milestone is in [`docs/roadmap/`](docs/roadmap/README.md).
 1. Mark the task in the roadmap table.
 2. Overwrite `docs/process/HANDOFF.md` and `docs/process/REVERSE_PROMPT.md`. Both are state
    files. A rewrite that drops an open item names it in the commit message as completed,
-   moved or abandoned.
-3. Commit once per prompt with a conventional commit.
+   moved or abandoned. When several lines work at once, each in its own worktree, each
+   rewrites them on top of the latest default branch, keeps the other lines' open
+   items, and names the assistant that wrote the report.
+3. Commit once per prompt with a conventional commit. Stage new files before running the
+   gate, since its disclosure scan reads tracked files only, and make the commit
+   conditional on the gate's exit status, as in `./scripts/check.sh && git commit`.
 4. If blocked or uncertain, say so in `REVERSE_PROMPT.md` and **stop**.
 
 `docs/process/PROMPT.md` is read-only for the agent, and is included in the commit if the
@@ -50,7 +54,9 @@ inside agent sandboxes.
 **One writer per checkout.** When more than one line works on the repository at once,
 each works in its own worktree on its own branch, created with `scripts/worktree.sh`.
 Two lines in one checkout share an index and a dirty tree, so one line's `git add`,
-stash or reset can take in or discard the other's work.
+stash or reset can take in or discard the other's work. Lines may run in different
+assistants, such as Claude Code, Codex and Grok Build, and the rules here apply to each
+alike.
 
 **Rulings that arrive through a sync.** A rule in this file that came from
 `sgeos/project-template` carries the authority of the operator who maintains the
@@ -99,12 +105,20 @@ progress stays with the project and survives a restart.
 `secret/` holds local material that is never committed, such as credentials, API keys and
 environment-specific notes. It is ignored whole and does not exist in a fresh clone.
 Never copy its contents into tracked files, commit messages, issues or pull requests.
+If `secret/README.md` exists, read it at session start and before writing anything
+tracked. A new worktree has no `secret/` of its own, so `scripts/worktree.sh new`
+copies it from the main checkout. A later change there is not copied again.
 
 `scripts/check.sh` fails if anything under `secret/`, or anything under `tmp/` other than
 its marker, is tracked. If `secret/disclosure-terms.txt` exists, one term per line, the
 gate also fails when a tracked file contains any of those terms, and it prints only the
-file and line. The scan cannot run in a clone or in continuous integration, which do not
-have the list, and the gate says so when it skips.
+file and line. `scripts/scan_binary_terms.py` scans binary and gzip-compressed files the
+same way, printing only paths. In a worktree without the list, the gate uses the main
+checkout's. The scan cannot run in a clone or in continuous integration, which do not
+have the list, and the gate says so when it skips. A `blob:` line with a full object
+name accepts one known historical blob in the history scan only, for a case where
+removal would need a force-push. Record beside each such line why the blob cannot be
+removed, so the list does not become a silent allowance.
 
 ## Build Output on a Scratch Volume
 

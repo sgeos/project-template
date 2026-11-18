@@ -39,6 +39,11 @@ Thumbs.db
 *~
 nvim.log
 
+# Python's compiled files are build output. The gate's own Python scripts produce
+# them, so every project ignores them.
+__pycache__/
+*.py[cod]
+
 # Add language and tool entries below, such as build output, dependency
 # directories and virtual environments. Write each without a trailing slash, as
 # `/target` rather than `/target/`, because scripts/scratch.sh may replace the
